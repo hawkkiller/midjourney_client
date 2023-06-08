@@ -18,4 +18,13 @@ class InteractionData {
   final ApplicationCommandType type;
   final List<InteractionDataOption> options;
   final ApplicationCommand applicationCommand;
+
+  Map<String, Object?> toJson() => {
+        'version': version,
+        'id': id,
+        'name': name,
+        'type': type.toInt(),
+        'options': options.map((e) => e.toJson()).toList(),
+        'application_command': applicationCommand.toJson(),
+      };
 }

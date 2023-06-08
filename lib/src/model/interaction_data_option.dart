@@ -10,4 +10,10 @@ class InteractionDataOption {
   final ApplicationCommandOptionType type;
   final String name;
   final String value;
+
+  Map<String, Object?> toJson() => {
+        'type': type.toInt(),
+        'name': name,
+        'value': value,
+      };
 }

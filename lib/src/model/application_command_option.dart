@@ -12,4 +12,11 @@ class ApplicationCommandOption {
   final String name;
   final String description;
   final bool? required;
+
+  Map<String, Object?> toJson() => {
+        'type': type.toInt(),
+        'name': name,
+        'description': description,
+        'required': required,
+      };
 }

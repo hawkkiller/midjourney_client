@@ -19,6 +19,16 @@ class Interaction {
   final String sessionId;
   final InteractionData data;
   final int nonce;
+
+  Map<String, Object?> toJson() => {
+        'type': type.toInt(),
+        'application_id': applicationId,
+        'guild_id': guildId,
+        'channel_id': channelId,
+        'session_id': sessionId,
+        'data': data.toJson(),
+        'nonce': nonce,
+      };
 }
 
 // {

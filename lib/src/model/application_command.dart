@@ -27,4 +27,18 @@ class ApplicationCommand {
   final bool dmPermission;
   final List<dynamic>? contexts;
   final List<ApplicationCommandOption>? options;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'application_id': applicationId,
+        'version': version,
+        'default_member_permissions': defaultMemberPermissions,
+        'type': type.toInt(),
+        'nsfw': nsfw,
+        'name': name,
+        'description': description,
+        'dm_permission': dmPermission,
+        'contexts': contexts,
+        'options': options?.map((e) => e.toJson()).toList(),
+      };
 }
