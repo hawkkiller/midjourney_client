@@ -7,7 +7,9 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
+  http: ^1.0.0
   l: ^4.0.1
+  meta: ^1.9.1
 
 dev_dependencies:
   sizzle_lints: 1.0.10
