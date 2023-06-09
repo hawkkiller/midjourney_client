@@ -1,1 +1,3 @@
-int calculate() => 6 * 7;
+library midjourney_client;
+
+export 'src/midjourney_client.dart';
