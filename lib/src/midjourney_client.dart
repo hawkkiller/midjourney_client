@@ -1,36 +1,36 @@
 import 'package:meta/meta.dart';
 import 'package:midjourney_client/src/midjourney_api.dart';
+import 'package:midjourney_client/src/model/midjourney_config.dart';
 
 class Midjourney {
   Midjourney({
-    required this.serverId,
-    required this.channelId,
-    required this.token,
-    this.isDebug = false,
+    /// The server id of the server what the client should use.
+    required String serverId,
+
+    /// The channel id of the channel inside [serverId] what the client should use.
+    required String channelId,
+
+    /// The token of the client.
+    required String token,
+
+    /// Whether to log debug messages.
+    bool isDebug = false,
     @visibleForTesting MidjourneyApi? api,
-  }) : _api = api ?? MidjourneyApiDiscordImpl();
-
-  /// The server id of the server what the client should use.
-  final int serverId;
-
-  /// The channel id of the channel inside [serverId] what the client should use.
-  final int channelId;
-
-  /// The token of the client.
-  final String token;
-
-  /// Whether to log debug messages.
-  final bool isDebug;
+  })  : assert(serverId.isNotEmpty, 'serverId must not be empty'),
+        assert(channelId.isNotEmpty, 'channelId must not be empty'),
+        assert(token.isNotEmpty, 'token must not be empty'),
+        _api = api ??
+            MidjourneyApiDiscordImpl(
+              config: MidjourneyConfig.discord.copyWith(
+                channelId: channelId,
+                guildId: serverId,
+                token: token,
+                isDebug: isDebug,
+              ),
+            );
 
   /// The api to use.
-  final MidjourneyApi _api;
+  late final MidjourneyApi _api;
 
-  Future<void> imagine(
-    String prompt, {
-    bool isDebug = false,
-  }) =>
-      _api.imagine(
-        prompt,
-        isDebug: isDebug || this.isDebug,
-      );
+  Future<void> imagine(String prompt) => _api.imagine(prompt);
 }

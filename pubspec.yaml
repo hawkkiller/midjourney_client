@@ -1,6 +1,6 @@
 name: midjourney_client
 description: Unofficial midjourney client that gives you possibility to generates images!
-version: 0.0.1
+version: 0.1.0
 repository: https://github.com/hawkkiller/midjourney-client
 
 environment:
