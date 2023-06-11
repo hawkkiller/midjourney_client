@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 
 class Env {
@@ -11,8 +13,8 @@ Future<void> main(List<Object> arguments) async {
     serverId: Env.serverId,
     channelId: Env.channelId,
     token: Env.token,
-    isDebug: true,
+    loggerLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
-  await client.imagine('Cat in a hat');
+  client.imagine('Cat in a hat').listen(print);
 }

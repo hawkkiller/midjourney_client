@@ -4,31 +4,32 @@ class MidjourneyConfig {
     this.token = '',
     this.guildId = '',
     this.channelId = '',
-    this.isDebug = false,
+    this.wsUrl = '',
   });
 
   final String baseUrl;
+  final String wsUrl;
   final String token;
   final String guildId;
   final String channelId;
-  final bool isDebug;
 
   static final discord = MidjourneyConfig(
     baseUrl: 'https://discord.com',
+    wsUrl: 'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
   );
 
   MidjourneyConfig copyWith({
     String? baseUrl,
+    String? wsUrl,
     String? token,
     String? guildId,
     String? channelId,
-    bool? isDebug,
   }) =>
       MidjourneyConfig(
         baseUrl: baseUrl ?? this.baseUrl,
+        wsUrl: wsUrl ?? this.wsUrl,
         token: token ?? this.token,
         guildId: guildId ?? this.guildId,
         channelId: channelId ?? this.channelId,
-        isDebug: isDebug ?? this.isDebug,
       );
 }

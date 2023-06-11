@@ -13,6 +13,7 @@ dependencies:
   http: ^1.0.0
   l: ^4.0.1
   meta: ^1.9.1
+  ws: ^0.0.3-dev.placeholder
 
 dev_dependencies:
   sizzle_lints: ^1.0.10

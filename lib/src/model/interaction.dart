@@ -1,6 +1,3 @@
-import 'package:midjourney_client/src/model/interaction_data.dart';
-import 'package:midjourney_client/src/model/interaction_type.dart';
-
 class Interaction {
   Interaction({
     required this.sessionId,
@@ -31,36 +28,166 @@ class Interaction {
       };
 }
 
-// {
-//   'type': 2,
-//   'application_id': '936929561302675456',
-//   'guild_id': '1014828232740192296',
-//   'channel_id': '1110474702335520768',
-//   'session_id': '08eea0d2b1374d01971314073d32d769',
-//   'data': {
-//     'version': '1077969938624553050',
-//     'id': '938956540159881230',
-//     'name': 'imagine',
-//     'type': 1,
-//     'options': [
-//       {'type': 3, 'name': 'prompt', 'value': 'aboba'}
-//     ],
-//     'application_command': {
-//       'id': '938956540159881230',
-//       'application_id': '936929561302675456',
-//       'version': '1077969938624553050',
-//       'default_member_permissions': null,
-//       'type': 1,
-//       'nsfw': false,
-//       'name': 'imagine',
-//       'description': 'Create images with Midjourney',
-//       'dm_permission': true,
-//       'contexts': null,
-//       'options': [
-//         {'type': 3, 'name': 'prompt', 'description': 'The prompt to imagine', 'required': true}
-//       ]
-//     },
-//     'attachments': []
-//   },
-//   'nonce': '1116376177905238016',
-// }
+class InteractionData {
+  InteractionData({
+    required this.applicationCommand,
+    required this.version,
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.options,
+  });
+
+  final String version;
+  final String id;
+  final String name;
+  final ApplicationCommandType type;
+  final List<InteractionDataOption> options;
+  final ApplicationCommand applicationCommand;
+
+  Map<String, Object?> toJson() => {
+        'version': version,
+        'id': id,
+        'name': name,
+        'type': type.toInt(),
+        'options': options.map((e) => e.toJson()).toList(),
+        'application_command': applicationCommand.toJson(),
+      };
+}
+
+class InteractionDataOption {
+  InteractionDataOption({
+    required this.type,
+    required this.name,
+    required this.value,
+  });
+
+  final ApplicationCommandOptionType type;
+  final String name;
+  final String value;
+
+  Map<String, Object?> toJson() => {
+        'type': type.toInt(),
+        'name': name,
+        'value': value,
+      };
+}
+
+enum InteractionType {
+  ping,
+  applicationCommand,
+  messageComponent,
+  applicationCommandAutocomplete,
+  modalSubmit;
+
+  int toInt() => switch (this) {
+        InteractionType.ping => 1,
+        InteractionType.applicationCommand => 2,
+        InteractionType.messageComponent => 3,
+        InteractionType.applicationCommandAutocomplete => 4,
+        InteractionType.modalSubmit => 5,
+      };
+}
+
+class ApplicationCommand {
+  ApplicationCommand({
+    required this.id,
+    required this.applicationId,
+    required this.version,
+    required this.type,
+    required this.nsfw,
+    required this.name,
+    required this.description,
+    required this.dmPermission,
+    this.defaultMemberPermissions,
+    this.options,
+    this.contexts,
+  });
+
+  final String id;
+  final String applicationId;
+  final String version;
+  final String? defaultMemberPermissions;
+  final ApplicationCommandType type;
+  final bool nsfw;
+  final String name;
+  final String description;
+  final bool dmPermission;
+  final List<dynamic>? contexts;
+  final List<ApplicationCommandOption>? options;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'application_id': applicationId,
+        'version': version,
+        'default_member_permissions': defaultMemberPermissions,
+        'type': type.toInt(),
+        'nsfw': nsfw,
+        'name': name,
+        'description': description,
+        'dm_permission': dmPermission,
+        'contexts': contexts,
+        'options': options?.map((e) => e.toJson()).toList(),
+      };
+}
+
+enum ApplicationCommandType {
+  chatInput,
+  user,
+  message;
+
+  int toInt() => switch (this) {
+        ApplicationCommandType.chatInput => 1,
+        ApplicationCommandType.user => 2,
+        ApplicationCommandType.message => 3,
+      };
+}
+
+class ApplicationCommandOption {
+  ApplicationCommandOption({
+    required this.type,
+    required this.name,
+    required this.description,
+    this.required,
+  });
+
+  final ApplicationCommandOptionType type;
+  final String name;
+  final String description;
+  final bool? required;
+
+  Map<String, Object?> toJson() => {
+        'type': type.toInt(),
+        'name': name,
+        'description': description,
+        'required': required,
+      };
+}
+
+enum ApplicationCommandOptionType {
+  subCommand,
+  subCommandGroup,
+  string,
+  integer,
+  boolean,
+  user,
+  channel,
+  role,
+  mentionable,
+  number,
+  attachment;
+
+  int toInt() => switch (this) {
+        ApplicationCommandOptionType.subCommand => 1,
+        ApplicationCommandOptionType.subCommandGroup => 2,
+        ApplicationCommandOptionType.string => 3,
+        ApplicationCommandOptionType.integer => 4,
+        ApplicationCommandOptionType.boolean => 5,
+        ApplicationCommandOptionType.user => 6,
+        ApplicationCommandOptionType.channel => 7,
+        ApplicationCommandOptionType.role => 8,
+        ApplicationCommandOptionType.mentionable => 9,
+        ApplicationCommandOptionType.number => 10,
+        ApplicationCommandOptionType.attachment => 11,
+      };
+}
