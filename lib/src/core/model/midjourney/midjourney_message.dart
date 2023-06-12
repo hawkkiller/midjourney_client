@@ -6,15 +6,12 @@ sealed class ImagineMessage extends MidjourneyMessage {
   const ImagineMessage({
     required this.id,
     required this.content,
-    required this.hash,
     required this.uri,
   });
 
   final String id;
 
   final String content;
-
-  final String hash;
 
   final String uri;
 
@@ -29,7 +26,6 @@ class ImagineMessage$Progress extends ImagineMessage {
     required this.progress,
     required super.id,
     required super.content,
-    required super.hash,
     required super.uri,
   });
 
@@ -45,7 +41,6 @@ class ImagineMessage$Progress extends ImagineMessage {
               'progress: $progress, ',
               'id: $id, ',
               'content: $content, ',
-              'hash: $hash, ',
               'uri: $uri',
               ')',
             ],
@@ -58,7 +53,6 @@ class ImagineMessage$Finish extends ImagineMessage {
   const ImagineMessage$Finish({
     required super.id,
     required super.content,
-    required super.hash,
     required super.uri,
   });
 
@@ -70,7 +64,6 @@ class ImagineMessage$Finish extends ImagineMessage {
               r'MidjourneyMessage$Finish(',
               'id: $id, ',
               'content: $content, ',
-              'hash: $hash, ',
               'uri: $uri',
               ')',
             ],

@@ -159,9 +159,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     MLogger.d('Heartbeat sent $heartbeat');
   }
 
-  Future<void> _connect() async {
-    await _client.connect(config.wsUrl);
-  }
+  Future<void> _connect() => _client.connect(config.wsUrl);
 
   late final Completer<void> _connected = Completer()..complete(_connect());
 
@@ -173,7 +171,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Stream<ImagineMessage> waitImageMessage(String prompt) async* {
     await _connected.future;
     StreamSubscription<DiscordMessage>? subscription;
-    final controller = StreamController<ImagineMessage>();
+    final controller = StreamController<ImagineMessage>(sync: true);
     subscription = _discordMessages.listen((event) async {
       if (event case final DiscordMessage$MessageCreate msg) {
         if (msg.content.contains(prompt) && msg.nonce == null) {
@@ -181,7 +179,6 @@ final class DiscordConnectionImpl implements DiscordConnection {
             ImagineMessage$Finish(
               id: msg.id,
               content: msg.content,
-              hash: msg.content.hashCode.toString(),
               uri: msg.attachments!.first.url,
             ),
           );
@@ -199,7 +196,6 @@ final class DiscordConnectionImpl implements DiscordConnection {
               progress: int.parse(progress!),
               id: msg.id,
               content: msg.content,
-              hash: msg.content.hashCode.toString(),
               uri: msg.attachments!.first.url,
             ),
           );

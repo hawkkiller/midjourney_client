@@ -23,8 +23,8 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
 
   @override
   Stream<ImagineMessage> imagine(String prompt) async* {
-    /// Add a seed to the prompt to avoid collisions because prompt
-    /// is the only thing that is lasted between requests.
+    // Add a seed to the prompt to avoid collisions because prompt
+    // is the only thing that is lasted between requests.
     prompt = '$prompt --seed ${DateTime.now().microsecondsSinceEpoch % 1000000}';
     await interactionClient.imagine(prompt);
     yield* connection.waitImageMessage(prompt);

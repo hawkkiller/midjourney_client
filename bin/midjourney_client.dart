@@ -14,10 +14,8 @@ Future<void> main(List<Object> arguments) async {
     serverId: Env.serverId,
     channelId: Env.channelId,
     token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.debug,
+    loggerLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
-  client.imagine('Cat in a hat').listen(MLogger.i);
-  client.imagine('Cat in a mask').listen(MLogger.i);
   client.imagine('Cat with sword').listen(MLogger.i);
 }

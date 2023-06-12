@@ -10,11 +10,12 @@ sealed class DiscordMessage {
 
 final class DiscordMessage$MessageCreate extends DiscordMessage {
   const DiscordMessage$MessageCreate({
-    required this.nonce,
     required this.id,
     required this.content,
     required this.embeds,
-    required this.attachments,
+    required this.author,
+    this.nonce,
+    this.attachments,
   });
 
   factory DiscordMessage$MessageCreate.fromJson(Map<String, Object?> json) =>
@@ -22,6 +23,7 @@ final class DiscordMessage$MessageCreate extends DiscordMessage {
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
         content: json['content']! as String,
+        author: Author.fromJson(json['author']! as Map<String, Object?>),
         attachments: (json['attachments'] as List<Object?>?)
             ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
             .toList(),
@@ -30,10 +32,11 @@ final class DiscordMessage$MessageCreate extends DiscordMessage {
             .toList(),
       );
 
-  final String? nonce;
   final String content;
   final String id;
   final List<Embed> embeds;
+  final Author author;
+  final String? nonce;
   final List<Attachment>? attachments;
 
   @override
@@ -56,11 +59,12 @@ final class DiscordMessage$MessageCreate extends DiscordMessage {
 
 final class DiscordMessage$MessageUpdate extends DiscordMessage {
   const DiscordMessage$MessageUpdate({
-    required this.nonce,
     required this.id,
     required this.embeds,
-    required this.attachments,
     required this.content,
+    required this.author,
+    this.attachments,
+    this.nonce,
   });
 
   factory DiscordMessage$MessageUpdate.fromJson(Map<String, Object?> json) =>
@@ -68,6 +72,7 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage {
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
         content: json['content']! as String,
+        author: Author.fromJson(json['author']! as Map<String, Object?>),
         attachments: (json['attachments'] as List<Object?>?)
             ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
             .toList(),
@@ -76,11 +81,12 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage {
             .toList(),
       );
 
-  final String? nonce;
   final String id;
   final List<Embed> embeds;
-  final List<Attachment>? attachments;
   final String content;
+  final String? nonce;
+  final List<Attachment>? attachments;
+  final Author author;
 
   @override
   String toString() => (
@@ -91,6 +97,7 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage {
               'nonce: $nonce, ',
               'id: $id, ',
               'content: $content, ',
+              'author: $author, ',
               'attachments: $attachments, ',
               'embeds: $embeds',
               ')',
@@ -188,6 +195,44 @@ final class Attachment {
               'size: $size, ',
               'filename: $filename, ',
               'id: $id',
+              ')',
+            ],
+          ),
+      )
+          .toString();
+}
+
+@immutable
+final class Author {
+  const Author({
+    required this.username,
+    required this.discriminator,
+    required this.id,
+    required this.avatar,
+  });
+
+  factory Author.fromJson(Map<String, Object?> json) => Author(
+        username: json['username']! as String,
+        discriminator: json['discriminator']! as String,
+        id: json['id']! as String,
+        avatar: json['avatar']! as String?,
+      );
+
+  final String username;
+  final String discriminator;
+  final String id;
+  final String? avatar;
+
+  @override
+  String toString() => (
+        StringBuffer()
+          ..writeAll(
+            [
+              'Author(',
+              'username: $username, ',
+              'discriminator: $discriminator, ',
+              'id: $id, ',
+              'avatar: $avatar',
               ')',
             ],
           ),
