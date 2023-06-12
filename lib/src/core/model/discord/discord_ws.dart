@@ -16,7 +16,7 @@ class DiscordWs$Auth extends DiscordWs {
           'token': token,
           'capabilities': 8189,
           'properties': {
-            'os': 'linux',
+            'os': 'osx',
             'browser': 'Chrome',
             'device': '',
           },

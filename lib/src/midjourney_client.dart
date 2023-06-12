@@ -1,8 +1,9 @@
 import 'package:meta/meta.dart';
+import 'package:midjourney_client/src/core/model/midjourney/midjourney_message.dart';
+import 'package:midjourney_client/src/core/model/midjourney_config.dart';
+import 'package:midjourney_client/src/core/utils/logger.dart';
+import 'package:midjourney_client/src/discord_api.dart';
 import 'package:midjourney_client/src/midjourney_api.dart';
-import 'package:midjourney_client/src/misc/logger.dart';
-import 'package:midjourney_client/src/model/midjourney_config.dart';
-import 'package:midjourney_client/src/model/midjourney_message.dart';
 
 class Midjourney {
   Midjourney({
@@ -37,5 +38,5 @@ class Midjourney {
   /// The api to use.
   late final MidjourneyApi _api;
 
-  Stream<MidjourneyMessage> imagine(String prompt) => _api.imagine(prompt);
+  Stream<ImagineMessage> imagine(String prompt) => _api.imagine(prompt);
 }
