@@ -7,6 +7,8 @@ class Interaction {
     required this.type,
     required this.data,
     required this.nonce,
+    this.messageFlags,
+    this.messageId,
   });
 
   final InteractionType type;
@@ -15,7 +17,9 @@ class Interaction {
   final String channelId;
   final String sessionId;
   final InteractionData data;
-  final int nonce;
+  final String nonce;
+  final int? messageFlags;
+  final String? messageId;
 
   Map<String, Object?> toJson() => {
         'type': type.toInt(),
@@ -25,11 +29,36 @@ class Interaction {
         'session_id': sessionId,
         'data': data.toJson(),
         'nonce': nonce,
+        if (messageFlags != null) 'message_flags': messageFlags,
+        if (messageId != null) 'message_id': messageId,
       };
 }
 
-class InteractionData {
-  InteractionData({
+sealed class InteractionData {
+  Map<String, Object?> toJson();
+}
+
+class InteractionData$MessageComponent extends InteractionData {
+  InteractionData$MessageComponent({
+    required this.customId,
+    required this.componentType,
+    this.values,
+  });
+
+  final String customId;
+  final MessageComponentType componentType;
+  final List<String>? values;
+
+  @override
+  Map<String, Object?> toJson() => {
+        'component_type': componentType.toInt(),
+        'custom_id': customId,
+        if (values != null) 'values': values,
+      };
+}
+
+class InteractionData$ApplicationCommand extends InteractionData {
+  InteractionData$ApplicationCommand({
     required this.applicationCommand,
     required this.version,
     required this.id,
@@ -45,6 +74,7 @@ class InteractionData {
   final List<InteractionDataOption> options;
   final ApplicationCommand applicationCommand;
 
+  @override
   Map<String, Object?> toJson() => {
         'version': version,
         'id': id,
@@ -70,22 +100,6 @@ class InteractionDataOption {
         'type': type.toInt(),
         'name': name,
         'value': value,
-      };
-}
-
-enum InteractionType {
-  ping,
-  applicationCommand,
-  messageComponent,
-  applicationCommandAutocomplete,
-  modalSubmit;
-
-  int toInt() => switch (this) {
-        InteractionType.ping => 1,
-        InteractionType.applicationCommand => 2,
-        InteractionType.messageComponent => 3,
-        InteractionType.applicationCommandAutocomplete => 4,
-        InteractionType.modalSubmit => 5,
       };
 }
 
@@ -131,18 +145,6 @@ class ApplicationCommand {
       };
 }
 
-enum ApplicationCommandType {
-  chatInput,
-  user,
-  message;
-
-  int toInt() => switch (this) {
-        ApplicationCommandType.chatInput => 1,
-        ApplicationCommandType.user => 2,
-        ApplicationCommandType.message => 3,
-      };
-}
-
 class ApplicationCommandOption {
   ApplicationCommandOption({
     required this.type,
@@ -161,6 +163,56 @@ class ApplicationCommandOption {
         'name': name,
         'description': description,
         'required': required,
+      };
+}
+
+enum MessageComponentType {
+  actionRow,
+  button,
+  stringSelect,
+  textInput,
+  userSelect,
+  roleSelect,
+  mentionableSelect,
+  channelSelect;
+
+  int toInt() => switch (this) {
+        MessageComponentType.actionRow => 1,
+        MessageComponentType.button => 2,
+        MessageComponentType.stringSelect => 3,
+        MessageComponentType.textInput => 4,
+        MessageComponentType.userSelect => 5,
+        MessageComponentType.roleSelect => 6,
+        MessageComponentType.mentionableSelect => 7,
+        MessageComponentType.channelSelect => 8,
+      };
+}
+
+enum InteractionType {
+  ping,
+  applicationCommand,
+  messageComponent,
+  applicationCommandAutocomplete,
+  modalSubmit;
+
+  int toInt() => switch (this) {
+        InteractionType.ping => 1,
+        InteractionType.applicationCommand => 2,
+        InteractionType.messageComponent => 3,
+        InteractionType.applicationCommandAutocomplete => 4,
+        InteractionType.modalSubmit => 5,
+      };
+}
+
+enum ApplicationCommandType {
+  chatInput,
+  user,
+  message;
+
+  int toInt() => switch (this) {
+        ApplicationCommandType.chatInput => 1,
+        ApplicationCommandType.user => 2,
+        ApplicationCommandType.message => 3,
       };
 }
 

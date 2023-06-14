@@ -2,8 +2,8 @@ abstract class MidjourneyMessage {
   const MidjourneyMessage();
 }
 
-sealed class ImagineMessage extends MidjourneyMessage {
-  const ImagineMessage({
+sealed class ImageMessage extends MidjourneyMessage {
+  const ImageMessage({
     required this.id,
     required this.content,
     required this.uri,
@@ -16,13 +16,13 @@ sealed class ImagineMessage extends MidjourneyMessage {
   final String uri;
 
   int get progress => switch (this) {
-        final ImagineMessage$Progress v => v.progress,
-        ImagineMessage$Finish() => 100,
+        final ImageMessage$Progress v => v.progress,
+        ImageMessage$Finish() => 100,
       };
 }
 
-class ImagineMessage$Progress extends ImagineMessage {
-  const ImagineMessage$Progress({
+class ImageMessage$Progress extends ImageMessage {
+  const ImageMessage$Progress({
     required this.progress,
     required super.id,
     required super.content,
@@ -49,8 +49,8 @@ class ImagineMessage$Progress extends ImagineMessage {
           .toString();
 }
 
-class ImagineMessage$Finish extends ImagineMessage {
-  const ImagineMessage$Finish({
+class ImageMessage$Finish extends ImageMessage {
+  const ImageMessage$Finish({
     required super.id,
     required super.content,
     required super.uri,

@@ -16,14 +16,15 @@ import 'package:ws/ws.dart';
 
 abstract interface class DiscordInteractionClient {
   /// Imagine a new picture with the given [prompt].
-  ///
-  /// Returns nonce.
-  Future<void> imagine(String prompt);
+  void imagine(String prompt);
+
+  /// Create a new variation based on the picture
+  int variation(ImageMessage$Finish imageMessage, int index);
 }
 
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [prompt].
-  Stream<ImagineMessage> waitImageMessage(String prompt);
+  Stream<ImageMessage> waitImageMessage(String prompt, [String? nonce]);
 }
 
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
@@ -69,7 +70,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  Future<void> imagine(String prompt) async {
+  void imagine(String prompt) {
     final nonce = _snowflaker.nextId();
     final imaginePayload = Interaction(
       type: InteractionType.applicationCommand,
@@ -77,8 +78,8 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
-      nonce: nonce,
-      data: InteractionData(
+      nonce: nonce.toString(),
+      data: InteractionData$ApplicationCommand(
         version: '1077969938624553050',
         id: '938956540159881230',
         name: 'imagine',
@@ -115,12 +116,41 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
 
     _rateLimitedInteractions(body);
   }
+
+  @override
+  int variation(ImageMessage$Finish imageMessage, int index) {
+    final nonce = _snowflaker.nextId();
+    final hash = uriToHash(imageMessage.uri);
+    final variationPayload = Interaction(
+      messageFlags: 0,
+      messageId: imageMessage.id,
+      type: InteractionType.messageComponent,
+      applicationId: '936929561302675456',
+      sessionId: _config.token,
+      channelId: _config.channelId,
+      guildId: _config.guildId,
+      nonce: nonce.toString(),
+      data: InteractionData$MessageComponent(
+        customId: 'MJ::JOB::variation::$index::$hash',
+        componentType: MessageComponentType.button,
+      ),
+    );
+
+    final body = variationPayload.toJson();
+
+    _rateLimitedInteractions(body);
+
+    return nonce;
+  }
+
+  String uriToHash(String uri) => uri.split('_').removeLast().split('.').first;
 }
 
 final class DiscordConnectionImpl implements DiscordConnection {
   DiscordConnectionImpl({
     required this.config,
   }) {
+    _client.connect(config.wsUrl);
     _client.stateChanges.listen((event) async {
       MLogger.d('State change: $event');
       if (event.readyState == WebSocketReadyState.open) {
@@ -159,27 +189,25 @@ final class DiscordConnectionImpl implements DiscordConnection {
     MLogger.d('Heartbeat sent $heartbeat');
   }
 
-  Future<void> _connect() => _client.connect(config.wsUrl);
-
-  late final Completer<void> _connected = Completer()..complete(_connect());
-
-  final WebSocketClient _client = WebSocketClient();
+  final _client = WebSocketClient();
 
   final MidjourneyConfig config;
 
   @override
-  Stream<ImagineMessage> waitImageMessage(String prompt) async* {
-    await _connected.future;
+  Stream<ImageMessage> waitImageMessage(String prompt, [String? nonce]) async* {
     StreamSubscription<DiscordMessage>? subscription;
-    final controller = StreamController<ImagineMessage>(sync: true);
+    final controller = StreamController<ImageMessage>(sync: true);
+
     subscription = _discordMessages.listen((event) async {
       if (event case final DiscordMessage$MessageCreate msg) {
+        if (!msg.author.bot || msg.author.username != 'Midjourney Bot') return;
         if (msg.content.contains(prompt) && msg.nonce == null) {
+          final uri = msg.attachments!.first.url;
           controller.add(
-            ImagineMessage$Finish(
+            ImageMessage$Finish(
               id: msg.id,
               content: msg.content,
-              uri: msg.attachments!.first.url,
+              uri: uri,
             ),
           );
           await subscription?.cancel();
@@ -188,12 +216,13 @@ final class DiscordConnectionImpl implements DiscordConnection {
       }
 
       if (event case final DiscordMessage$MessageUpdate msg) {
+        if (!msg.author.bot || msg.author.username != 'Midjourney Bot') return;
         if (msg.content.contains(prompt)) {
           // content: **Cat in a hat --seed 745825 --upbeta --s 250 --style raw** - <@292625550051246080> (62%) (fast)
           final progress = RegExp(r'\((\d+)%\)').firstMatch(msg.content)?.group(1);
           controller.add(
-            ImagineMessage$Progress(
-              progress: int.parse(progress!),
+            ImageMessage$Progress(
+              progress: int.tryParse(progress ?? '0') ?? 0,
               id: msg.id,
               content: msg.content,
               uri: msg.attachments!.first.url,
@@ -210,3 +239,18 @@ final class DiscordConnectionImpl implements DiscordConnection {
     _timer?.cancel();
   }
 }
+
+// {
+//   "type": 3,
+//   "nonce": "1117911755964547072",
+//   "guild_id": "1014828232740192296",
+//   "channel_id": "1014828233226735648",
+//   "message_flags": 0,
+//   "message_id": "1117911635139514458",
+//   "application_id": "936929561302675456",
+//   "session_id": "8c52679dad307da8eeacc3471343a21b",
+//   "data": {
+//     "component_type": 2,
+//     "custom_id": "MJ::JOB::variation::2::8ed1ed9f-8761-4a06-85a7-b1dc5fdfbb5f"
+//   }
+// }

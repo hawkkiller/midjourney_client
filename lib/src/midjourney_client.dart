@@ -38,5 +38,8 @@ class Midjourney {
   /// The api to use.
   late final MidjourneyApi _api;
 
-  Stream<ImagineMessage> imagine(String prompt) => _api.imagine(prompt);
+  Stream<ImageMessage> imagine(String prompt) => _api.imagine(prompt);
+
+  Stream<ImageMessage> variation(ImageMessage$Finish imageMessage, int index) =>
+      _api.variation(imageMessage, index);
 }

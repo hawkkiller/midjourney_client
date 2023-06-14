@@ -209,18 +209,21 @@ final class Author {
     required this.discriminator,
     required this.id,
     required this.avatar,
+    required this.bot,
   });
 
   factory Author.fromJson(Map<String, Object?> json) => Author(
         username: json['username']! as String,
         discriminator: json['discriminator']! as String,
         id: json['id']! as String,
+        bot: json['bot']! as bool,
         avatar: json['avatar']! as String?,
       );
 
   final String username;
   final String discriminator;
   final String id;
+  final bool bot;
   final String? avatar;
 
   @override

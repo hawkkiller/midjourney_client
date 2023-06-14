@@ -26,7 +26,7 @@ void main() {
         ),
       ],
     );
-    final interactionData = InteractionData(
+    final interactionData = InteractionData$ApplicationCommand(
       version: 'version',
       id: 'id',
       name: 'name',
@@ -46,7 +46,7 @@ void main() {
       guildId: 'guildId',
       applicationId: 'applicationId',
       type: InteractionType.applicationCommand,
-      nonce: snowflaker.nextId(),
+      nonce: snowflaker.nextId().toString(),
       data: interactionData,
     );
 
