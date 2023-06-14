@@ -42,7 +42,7 @@ packages:
     source: hosted
     version: "2.1.1"
   collection:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: collection
       sha256: f092b211a4319e98e5ff58223576de6c2803db36221657b46c82574721240687
@@ -385,6 +385,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  ws:
+    dependency: "direct main"
+    description:
+      name: ws
+      sha256: "39278e0cdc09d317db2da68ae9ebf3b6274079801a3895a295a9bf72b1987967"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3-dev.placeholder"
   yaml:
     dependency: transitive
     description:

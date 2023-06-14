@@ -1,11 +1,4 @@
-import 'package:midjourney_client/src/model/application_command.dart';
-import 'package:midjourney_client/src/model/application_command_option.dart';
-import 'package:midjourney_client/src/model/application_command_option_type.dart';
-import 'package:midjourney_client/src/model/application_command_type.dart';
-import 'package:midjourney_client/src/model/interaction.dart';
-import 'package:midjourney_client/src/model/interaction_data.dart';
-import 'package:midjourney_client/src/model/interaction_data_option.dart';
-import 'package:midjourney_client/src/model/interaction_type.dart';
+import 'package:midjourney_client/src/core/model/discord/interaction.dart';
 import 'package:snowflaker/snowflaker.dart';
 import 'package:test/test.dart';
 
@@ -33,7 +26,7 @@ void main() {
         ),
       ],
     );
-    final interactionData = InteractionData(
+    final interactionData = InteractionData$ApplicationCommand(
       version: 'version',
       id: 'id',
       name: 'name',
@@ -53,7 +46,7 @@ void main() {
       guildId: 'guildId',
       applicationId: 'applicationId',
       type: InteractionType.applicationCommand,
-      nonce: snowflaker.nextId(),
+      nonce: snowflaker.nextId().toString(),
       data: interactionData,
     );
 

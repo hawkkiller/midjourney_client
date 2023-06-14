@@ -1,6 +1,9 @@
 import 'package:meta/meta.dart';
+import 'package:midjourney_client/src/core/model/midjourney/midjourney_message.dart';
+import 'package:midjourney_client/src/core/model/midjourney_config.dart';
+import 'package:midjourney_client/src/core/utils/logger.dart';
+import 'package:midjourney_client/src/discord_api.dart';
 import 'package:midjourney_client/src/midjourney_api.dart';
-import 'package:midjourney_client/src/model/midjourney_config.dart';
 
 class Midjourney {
   Midjourney({
@@ -14,23 +17,29 @@ class Midjourney {
     required String token,
 
     /// Whether to log debug messages.
-    bool isDebug = false,
+    MLoggerLevel loggerLevel = MLoggerLevel.info,
     @visibleForTesting MidjourneyApi? api,
   })  : assert(serverId.isNotEmpty, 'serverId must not be empty'),
         assert(channelId.isNotEmpty, 'channelId must not be empty'),
-        assert(token.isNotEmpty, 'token must not be empty'),
-        _api = api ??
-            MidjourneyApiDiscordImpl(
-              config: MidjourneyConfig.discord.copyWith(
-                channelId: channelId,
-                guildId: serverId,
-                token: token,
-                isDebug: isDebug,
-              ),
-            );
+        assert(token.isNotEmpty, 'token must not be empty') {
+    MLogger.level = loggerLevel;
+    final config = MidjourneyConfig.discord.copyWith(
+      channelId: channelId,
+      guildId: serverId,
+      token: token,
+    );
+    _api = api ??
+        MidjourneyApiDiscordImpl(
+          connection: DiscordConnectionImpl(config: config),
+          interactionClient: DiscordInteractionClientImpl(config: config),
+        );
+  }
 
   /// The api to use.
   late final MidjourneyApi _api;
 
-  Future<void> imagine(String prompt) => _api.imagine(prompt);
+  Stream<ImageMessage> imagine(String prompt) => _api.imagine(prompt);
+
+  Stream<ImageMessage> variation(ImageMessage$Finish imageMessage, int index) =>
+      _api.variation(imageMessage, index);
 }

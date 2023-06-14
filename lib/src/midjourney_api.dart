@@ -1,109 +1,46 @@
-import 'dart:convert';
+import 'dart:async';
 
-import 'package:http/http.dart' as http;
-import 'package:l/l.dart';
-import 'package:meta/meta.dart';
-import 'package:midjourney_client/src/model/application_command.dart';
-import 'package:midjourney_client/src/model/application_command_option.dart';
-import 'package:midjourney_client/src/model/application_command_option_type.dart';
-import 'package:midjourney_client/src/model/application_command_type.dart';
-import 'package:midjourney_client/src/model/interaction.dart';
-import 'package:midjourney_client/src/model/interaction_data.dart';
-import 'package:midjourney_client/src/model/interaction_data_option.dart';
-import 'package:midjourney_client/src/model/interaction_type.dart';
-import 'package:midjourney_client/src/model/midjourney_config.dart';
-import 'package:snowflaker/snowflaker.dart';
+import 'package:midjourney_client/src/core/model/midjourney/midjourney_message.dart';
+import 'package:midjourney_client/src/discord_api.dart';
 
-abstract base class MidjourneyApi {
+abstract interface class MidjourneyApi {
   const MidjourneyApi();
 
   /// Imagine a new picture with the given [prompt].
-  Future<void> imagine(
-    String prompt, {
-    bool isDebug = false,
-  });
+  ///
+  /// Returns streamed messages of progress.
+  Stream<ImageMessage> imagine(String prompt);
+
+  /// Create a new variation based on the picture
+  /// 
+  /// Returns streamed messages of progress.
+  Stream<ImageMessage> variation(ImageMessage$Finish imageMessage, int index); 
 }
 
 final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   MidjourneyApiDiscordImpl({
-    required MidjourneyConfig config,
-    @visibleForTesting http.Client? client,
-  })  : _config = config,
-        _client = client ?? http.Client(),
-        _snowflaker = Snowflaker(datacenterId: 1, workerId: 1);
+    required this.interactionClient,
+    required this.connection,
+  });
 
-  final http.Client _client;
-  final MidjourneyConfig _config;
-  final Snowflaker _snowflaker;
+  final DiscordInteractionClient interactionClient;
+  final DiscordConnection connection;
 
   @override
-  Future<void> imagine(
-    String prompt, {
-    bool isDebug = false,
-  }) async {
-    final imaginePayload = Interaction(
-      type: InteractionType.applicationCommand,
-      applicationId: '936929561302675456',
-      sessionId: _config.token,
-      channelId: _config.channelId,
-      guildId: _config.guildId,
-      nonce: _snowflaker.nextId(),
-      data: InteractionData(
-        version: '1077969938624553050',
-        id: '938956540159881230',
-        name: 'imagine',
-        type: ApplicationCommandType.chatInput,
-        options: [
-          InteractionDataOption(
-            type: ApplicationCommandOptionType.string,
-            name: 'prompt',
-            value: prompt,
-          ),
-        ],
-        applicationCommand: ApplicationCommand(
-          id: '938956540159881230',
-          applicationId: '936929561302675456',
-          version: '1077969938624553050',
-          type: ApplicationCommandType.chatInput,
-          nsfw: false,
-          name: 'imagine',
-          description: 'Create images with Midjourney',
-          dmPermission: true,
-          options: [
-            ApplicationCommandOption(
-              type: ApplicationCommandOptionType.string,
-              name: 'prompt',
-              description: 'The prompt to imagine',
-              required: true,
-            ),
-          ],
-        ),
-      ),
-    );
-
-    final body = imaginePayload.toJson();
-
-    return interactions(body);
+  Stream<ImageMessage> imagine(String prompt) async* {
+    // Add a seed to the prompt to avoid collisions because prompt
+    // is the only thing that is lasted between requests.
+    prompt = '$prompt --seed ${DateTime.now().microsecondsSinceEpoch % 1000000}';
+    final nonce = interactionClient.imagine(prompt);
+    yield* connection.waitImageMessage(nonce);
   }
 
-  Future<void> interactions(Map<String, Object?> body) async {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': _config.token,
-    };
-
-    final response = await _client.post(
-      Uri.parse('${_config.baseUrl}/api/v9/interactions'),
-      body: jsonEncode(body),
-      headers: headers,
-    );
-
-    if (response.statusCode != 204) {
-      throw Exception('Failed to send interaction: ${response.body}');
+  @override
+  Stream<ImageMessage> variation(ImageMessage$Finish imageMessage, int index) async* {
+    if (index < 0 && index > 4) {
+      throw ArgumentError.value(index, 'index', 'Index must be between 0 and 5');
     }
-
-    l.v1('Successfully sent interaction: ${response.body}');
-
-    return;
+    final nonce = interactionClient.variation(imageMessage, index);
+    yield* connection.waitImageMessage(nonce);
   }
 }
