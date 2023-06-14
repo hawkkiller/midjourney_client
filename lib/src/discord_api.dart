@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 import 'package:midjourney_client/src/core/model/discord/discord_message.dart';
@@ -14,17 +15,24 @@ import 'package:midjourney_client/src/core/utils/stream_transformers.dart';
 import 'package:snowflaker/snowflaker.dart';
 import 'package:ws/ws.dart';
 
+typedef WaitMessageCallback = FutureOr<void> Function(
+  ImageMessage msg,
+  Exception? exception,
+);
+
+typedef WaitMessage = ({String nonce, String prompt});
+
 abstract interface class DiscordInteractionClient {
   /// Imagine a new picture with the given [prompt].
-  void imagine(String prompt);
+  int imagine(String prompt);
 
   /// Create a new variation based on the picture
   int variation(ImageMessage$Finish imageMessage, int index);
 }
 
 abstract interface class DiscordConnection {
-  /// Wait for a message with the given [prompt].
-  Stream<ImageMessage> waitImageMessage(String prompt, [String? nonce]);
+  /// Wait for a message with the given [nonce].
+  Stream<ImageMessage> waitImageMessage(int nonce);
 }
 
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
@@ -70,7 +78,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  void imagine(String prompt) {
+  int imagine(String prompt) {
     final nonce = _snowflaker.nextId();
     final imaginePayload = Interaction(
       type: InteractionType.applicationCommand,
@@ -115,12 +123,14 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     final body = imaginePayload.toJson();
 
     _rateLimitedInteractions(body);
+
+    return nonce;
   }
 
   @override
   int variation(ImageMessage$Finish imageMessage, int index) {
     final nonce = _snowflaker.nextId();
-    final hash = uriToHash(imageMessage.uri);
+    final hash = uriToHash(imageMessage.uri!);
     final variationPayload = Interaction(
       messageFlags: 0,
       messageId: imageMessage.id,
@@ -170,8 +180,10 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   Timer? _timer;
 
-  late final Stream<DiscordMessage> _discordMessages =
-      _client.stream.whereType<String>().map($discordMessageDecoder.convert);
+  late final Stream<DiscordMessage$Message> _discordMessages = _client.stream
+      .whereType<String>()
+      .map($discordMessageDecoder.convert)
+      .whereType<DiscordMessage$Message>();
 
   Future<void> _auth() async {
     final auth = DiscordWs$Auth(config.token).toJson();
@@ -191,46 +203,120 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   final _client = WebSocketClient();
 
+  /// Key is ID of the message
+  /// Value is nonce of the associated imagine interaction
+  final _waitMessages = <String, WaitMessage>{};
+
   final MidjourneyConfig config;
 
-  @override
-  Stream<ImageMessage> waitImageMessage(String prompt, [String? nonce]) async* {
-    StreamSubscription<DiscordMessage>? subscription;
-    final controller = StreamController<ImageMessage>(sync: true);
+  String content2Prompt(String? content) {
+    if (content == null || content.isEmpty) return '';
+    final pattern = RegExp(r'\*\*(.*?)\*\*'); // Match **middle content
+    final matches = pattern.allMatches(content);
+    if (matches.isNotEmpty && matches.first.groupCount >= 1) {
+      return matches.first.group(1) ?? ''; // Get the matched content
+    } else {
+      MLogger.w('Failed to parse prompt from content: $content');
+      return content;
+    }
+  }
 
-    subscription = _discordMessages.listen((event) async {
-      if (event case final DiscordMessage$MessageCreate msg) {
-        if (!msg.author.bot || msg.author.username != 'Midjourney Bot') return;
-        if (msg.content.contains(prompt) && msg.nonce == null) {
-          final uri = msg.attachments!.first.url;
-          controller.add(
-            ImageMessage$Finish(
-              id: msg.id,
-              content: msg.content,
-              uri: uri,
-            ),
+  ({
+    WaitMessage? waitMessage,
+    String? id,
+  }) getEventByContent(String content) {
+    final prompt = content2Prompt(content);
+
+    final entry =
+        _waitMessages.entries.firstWhereOrNull((element) => element.value.prompt == prompt);
+
+    return (waitMessage: entry?.value, id: entry?.key);
+  }
+
+  void _onceImage(
+    String nonce,
+    WaitMessageCallback fn,
+  ) {
+    StreamSubscription<DiscordMessage>? sub;
+
+    sub = _discordMessages.listen(
+      (event) async {
+        // Image generation started event
+        if (event.created && event.nonce == nonce) {
+          MLogger.d('Image message created: $event');
+          // check embeds (error or warning)
+          _waitMessages[event.id] = (
+            nonce: nonce,
+            prompt: content2Prompt(event.content),
           );
-          await subscription?.cancel();
-          await controller.close();
-        }
-      }
-
-      if (event case final DiscordMessage$MessageUpdate msg) {
-        if (!msg.author.bot || msg.author.username != 'Midjourney Bot') return;
-        if (msg.content.contains(prompt)) {
-          // content: **Cat in a hat --seed 745825 --upbeta --s 250 --style raw** - <@292625550051246080> (62%) (fast)
-          final progress = RegExp(r'\((\d+)%\)').firstMatch(msg.content)?.group(1);
-          controller.add(
+          await fn(
             ImageMessage$Progress(
-              progress: int.tryParse(progress ?? '0') ?? 0,
-              id: msg.id,
-              content: msg.content,
-              uri: msg.attachments!.first.url,
+              progress: 0,
+              id: event.id,
+              content: event.content,
             ),
+            null,
           );
         }
-      }
-    });
+
+        // Image generated event
+        if (event.created && event.nonce == null && (event.attachments?.isNotEmpty ?? false)) {
+          MLogger.d('Image generated: $event');
+          final msg = getEventByContent(event.content);
+
+          if (msg.waitMessage?.nonce == nonce) {
+            fn(
+              ImageMessage$Finish(
+                id: event.id,
+                content: event.content,
+                uri: event.attachments!.first.url,
+              ),
+              null,
+            );
+
+            _waitMessages.remove(msg.id);
+            await sub?.cancel();
+          }
+        }
+
+        // Image progress event
+        if (event.updated && event.nonce == null && (event.attachments?.isNotEmpty ?? false)) {
+          MLogger.d('Image updated: $event');
+          final $nonce = _waitMessages[event.id]?.nonce;
+          if ($nonce == nonce) {
+            final progress = RegExp(r'\((\d+)%\)').firstMatch(event.content)?.group(1) ?? '0';
+            await fn(
+              ImageMessage$Progress(
+                progress: int.tryParse(progress) ?? 0,
+                id: event.id,
+                content: event.content,
+                uri: event.attachments!.first.url,
+              ),
+              null,
+            );
+          }
+        }
+      },
+    );
+  }
+
+  @override
+  Stream<ImageMessage> waitImageMessage(int nonce) async* {
+    final controller = StreamController<ImageMessage>.broadcast(sync: true);
+    _onceImage(
+      nonce.toString(),
+      (msg, e) async {
+        if (e != null) {
+          controller.addError(e);
+          await controller.close();
+        } else {
+          controller.add(msg);
+          if (msg.finished) {
+            await controller.close();
+          }
+        }
+      },
+    );
     yield* controller.stream;
   }
 
@@ -239,18 +325,3 @@ final class DiscordConnectionImpl implements DiscordConnection {
     _timer?.cancel();
   }
 }
-
-// {
-//   "type": 3,
-//   "nonce": "1117911755964547072",
-//   "guild_id": "1014828232740192296",
-//   "channel_id": "1014828233226735648",
-//   "message_flags": 0,
-//   "message_id": "1117911635139514458",
-//   "application_id": "936929561302675456",
-//   "session_id": "8c52679dad307da8eeacc3471343a21b",
-//   "data": {
-//     "component_type": 2,
-//     "custom_id": "MJ::JOB::variation::2::8ed1ed9f-8761-4a06-85a7-b1dc5fdfbb5f"
-//   }
-// }

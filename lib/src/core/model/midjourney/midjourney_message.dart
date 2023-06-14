@@ -6,18 +6,23 @@ sealed class ImageMessage extends MidjourneyMessage {
   const ImageMessage({
     required this.id,
     required this.content,
-    required this.uri,
+    this.uri,
   });
 
   final String id;
 
   final String content;
 
-  final String uri;
+  final String? uri;
 
   int get progress => switch (this) {
         final ImageMessage$Progress v => v.progress,
         ImageMessage$Finish() => 100,
+      };
+  
+  bool get finished => switch (this) {
+        ImageMessage$Progress() => false,
+        ImageMessage$Finish() => true,
       };
 }
 
@@ -26,7 +31,7 @@ class ImageMessage$Progress extends ImageMessage {
     required this.progress,
     required super.id,
     required super.content,
-    required super.uri,
+    super.uri,
   });
 
   @override
@@ -53,7 +58,7 @@ class ImageMessage$Finish extends ImageMessage {
   const ImageMessage$Finish({
     required super.id,
     required super.content,
-    required super.uri,
+    required String super.uri,
   });
 
   @override

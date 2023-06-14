@@ -8,14 +8,84 @@ sealed class DiscordMessage {
   const DiscordMessage();
 }
 
-final class DiscordMessage$MessageCreate extends DiscordMessage {
-  const DiscordMessage$MessageCreate({
+final class DiscordMessage$Unsupported extends DiscordMessage {
+  const DiscordMessage$Unsupported({
+    required this.type,
+    required this.data,
+  });
+
+  final String type;
+  final Map<String, Object?> data;
+
+  @override
+  String toString() => (
+        StringBuffer()
+          ..writeAll(
+            [
+              '$type(',
+              'type: $type, ',
+              'data: $data',
+              ')',
+            ],
+          ),
+      )
+          .toString();
+}
+
+sealed class DiscordMessage$Message extends DiscordMessage {
+  const DiscordMessage$Message({
     required this.id,
     required this.content,
     required this.embeds,
     required this.author,
     this.nonce,
     this.attachments,
+  });
+
+  final String content;
+  final String id;
+  final List<Embed> embeds;
+  final Author author;
+  final String? nonce;
+  final List<Attachment>? attachments;
+
+  @override
+  String toString() => (
+        StringBuffer()
+          ..writeAll(
+            [
+              '$runtimeType(',
+              'id: $id, ',
+              'content: $content, ',
+              'embeds: $embeds, ',
+              'auhor: $author, ',
+              'nonce: $nonce, ',
+              'attachments: $attachments',
+              ')',
+            ],
+          ),
+      )
+          .toString();
+  
+  bool get created => switch (this) {
+        DiscordMessage$MessageCreate() => true,
+        _ => false,
+      }; 
+  
+  bool get updated => switch (this) {
+        DiscordMessage$MessageUpdate() => true,
+        _ => false,
+      };
+}
+
+final class DiscordMessage$MessageCreate extends DiscordMessage$Message {
+  const DiscordMessage$MessageCreate({
+    required super.id,
+    required super.content,
+    required super.embeds,
+    required super.author,
+    super.nonce,
+    super.attachments,
   });
 
   factory DiscordMessage$MessageCreate.fromJson(Map<String, Object?> json) =>
@@ -31,40 +101,16 @@ final class DiscordMessage$MessageCreate extends DiscordMessage {
             .map((e) => Embed.fromJson(e! as Map<String, Object?>))
             .toList(),
       );
-
-  final String content;
-  final String id;
-  final List<Embed> embeds;
-  final Author author;
-  final String? nonce;
-  final List<Attachment>? attachments;
-
-  @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              r'DiscordMessage$MessageCreate(',
-              'nonce: $nonce, ',
-              'id: $id, ',
-              'content: $content, ',
-              'attachments: $attachments, ',
-              'embeds: $embeds',
-              ')',
-            ],
-          ),
-      )
-          .toString();
 }
 
-final class DiscordMessage$MessageUpdate extends DiscordMessage {
+final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
   const DiscordMessage$MessageUpdate({
-    required this.id,
-    required this.embeds,
-    required this.content,
-    required this.author,
-    this.attachments,
-    this.nonce,
+    required super.id,
+    required super.embeds,
+    required super.content,
+    required super.author,
+    super.attachments,
+    super.nonce,
   });
 
   factory DiscordMessage$MessageUpdate.fromJson(Map<String, Object?> json) =>
@@ -80,42 +126,6 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage {
             .map((e) => Embed.fromJson(e! as Map<String, Object?>))
             .toList(),
       );
-
-  final String id;
-  final List<Embed> embeds;
-  final String content;
-  final String? nonce;
-  final List<Attachment>? attachments;
-  final Author author;
-
-  @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              r'DiscordMessage$MessageUpdate(',
-              'nonce: $nonce, ',
-              'id: $id, ',
-              'content: $content, ',
-              'author: $author, ',
-              'attachments: $attachments, ',
-              'embeds: $embeds',
-              ')',
-            ],
-          ),
-      )
-          .toString();
-}
-
-final class DiscordMessage$Unsupported extends DiscordMessage {
-  const DiscordMessage$Unsupported({
-    required this.json,
-  });
-
-  final Map<String, dynamic> json;
-
-  @override
-  String toString() => 'DiscordMessage\$Unsupported(json: $json)';
 }
 
 @immutable
@@ -267,10 +277,10 @@ class DiscordMessageDecoder extends Converter<String, DiscordMessage> {
       return switch (t) {
         'MESSAGE_CREATE' => DiscordMessage$MessageCreate.fromJson(d),
         'MESSAGE_UPDATE' => DiscordMessage$MessageUpdate.fromJson(d),
-        _ => DiscordMessage$Unsupported(json: d),
+        _ => DiscordMessage$Unsupported(type: t, data: d),
       };
     }
 
-    return DiscordMessage$Unsupported(json: json);
+    return DiscordMessage$Unsupported(type: 'Unknown', data: json);
   }
 }

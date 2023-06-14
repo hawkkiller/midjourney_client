@@ -31,16 +31,16 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
     // Add a seed to the prompt to avoid collisions because prompt
     // is the only thing that is lasted between requests.
     prompt = '$prompt --seed ${DateTime.now().microsecondsSinceEpoch % 1000000}';
-    interactionClient.imagine(prompt);
-    yield* connection.waitImageMessage(prompt);
+    final nonce = interactionClient.imagine(prompt);
+    yield* connection.waitImageMessage(nonce);
   }
-  
+
   @override
   Stream<ImageMessage> variation(ImageMessage$Finish imageMessage, int index) async* {
     if (index < 0 && index > 4) {
       throw ArgumentError.value(index, 'index', 'Index must be between 0 and 5');
     }
     final nonce = interactionClient.variation(imageMessage, index);
-    yield* connection.waitImageMessage(imageMessage.content, nonce.toString());
+    yield* connection.waitImageMessage(nonce);
   }
 }
