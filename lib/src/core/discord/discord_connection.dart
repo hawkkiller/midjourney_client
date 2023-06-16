@@ -15,7 +15,7 @@ typedef ValueChanged<T> = void Function(T value);
 
 /// Discord message with `associated` nonce
 ///
-///
+/// This is used to create association between nonce and message.
 typedef DiscordMessageNonce = ({String? nonce, DiscordMessage$Message message});
 
 /// Model that is used to store temporary data about a message that is being waited for.
@@ -51,7 +51,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// Callbacks for waiting messages
   final Map<String, ValueChanged<DiscordMessageNonce>> _waitMessageCallbacks = {};
 
-  /// Wait for an ImageMessage with a given nonce and returns a stream of these messages.
+  /// Wait for an [ImageMessage] with a given [nonce]. Returns a stream of [ImageMessage].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
   /// It registers a callback function that adds new messages to the stream or, in case of an error,
   /// adds the error to the stream and then closes it.
