@@ -12,5 +12,5 @@ Future<void> main(List<Object> arguments) async {
     loggerLevel: midjourney_client.MLoggerLevel.debug,
   );
 
-  client.imagine('Cat with sword').listen(MLogger.i);
+  client.imagine('Elephant on a tree').listen(MLogger.i);
 }

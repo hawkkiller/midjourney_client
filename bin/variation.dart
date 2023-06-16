@@ -10,7 +10,7 @@ Future<void> main(List<Object> arguments) async {
     serverId: Env.serverId,
     channelId: Env.channelId,
     token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.verbose,
+    loggerLevel: midjourney_client.MLoggerLevel.debug,
   );
 
   final result = await client.imagine('Cat with sword').last;
@@ -21,5 +21,7 @@ Future<void> main(List<Object> arguments) async {
     throw Exception('Expected ImageMessage\$Finish but got $result');
   }
 
-  client.variation(result, 1).listen(MLogger.e);
+  client.variation(result, 1).listen(MLogger.i);
+  client.variation(result, 2).listen(MLogger.i);
+  client.variation(result, 3).listen(MLogger.i);
 }

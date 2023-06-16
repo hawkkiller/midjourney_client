@@ -117,7 +117,7 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
       DiscordMessage$MessageUpdate(
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
-        content: json['content']! as String,
+        content: json['content'] as String? ?? '',
         author: Author.fromJson(json['author']! as Map<String, Object?>),
         attachments: (json['attachments'] as List<Object?>?)
             ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
