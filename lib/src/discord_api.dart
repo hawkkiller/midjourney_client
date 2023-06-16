@@ -266,17 +266,20 @@ class DiscordConnectionImpl implements DiscordConnection {
 
   /// Handle updated image message
   Future<void> _handleUpdatedImageMessage(
-      DiscordMessage$Message msg, WaitMessageCallback callback) async {
+    DiscordMessage$Message msg,
+    WaitMessageCallback callback,
+  ) async {
     final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content);
     final progress = progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : 0;
 
     // Trigger an image progress event
     await callback(
       ImageMessage$Progress(
-          progress: progress ?? 0,
-          id: msg.id,
-          content: msg.content,
-          uri: msg.attachments!.first.url),
+        progress: progress ?? 0,
+        id: msg.id,
+        content: msg.content,
+        uri: msg.attachments!.first.url,
+      ),
       null,
     );
   }
