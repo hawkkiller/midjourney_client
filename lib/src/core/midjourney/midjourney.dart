@@ -1,10 +1,15 @@
-import 'package:meta/meta.dart';
-import 'package:midjourney_client/src/core/model/midjourney/midjourney_message.dart';
-import 'package:midjourney_client/src/core/model/midjourney_config.dart';
+import 'package:midjourney_client/src/core/discord/discord_connection.dart';
+import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/core/midjourney/midjourney_api.dart';
+import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
+import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
 import 'package:midjourney_client/src/core/utils/logger.dart';
-import 'package:midjourney_client/src/discord_api.dart';
-import 'package:midjourney_client/src/midjourney_api.dart';
 
+/// The main instance of the midjourney client.
+/// 
+/// This is the main class to use to interact with the midjourney api.
+/// 
+/// See [imagine] and [variation] for more information.
 class Midjourney {
   Midjourney({
     /// The server id of the server what the client should use.
@@ -18,7 +23,6 @@ class Midjourney {
 
     /// Whether to log debug messages.
     MLoggerLevel loggerLevel = MLoggerLevel.info,
-    @visibleForTesting MidjourneyApi? api,
   })  : assert(serverId.isNotEmpty, 'serverId must not be empty'),
         assert(channelId.isNotEmpty, 'channelId must not be empty'),
         assert(token.isNotEmpty, 'token must not be empty') {
@@ -28,18 +32,23 @@ class Midjourney {
       guildId: serverId,
       token: token,
     );
-    _api = api ??
-        MidjourneyApiDiscordImpl(
-          connection: DiscordConnectionImpl(config: config),
-          interactionClient: DiscordInteractionClientImpl(config: config),
-        );
+    _api = MidjourneyApiDiscordImpl(
+      connection: DiscordConnectionImpl(config: config),
+      interactionClient: DiscordInteractionClientImpl(config: config),
+    );
   }
 
   /// The api to use.
   late final MidjourneyApi _api;
 
+  /// Imagine a new picture with the given [prompt].
+  ///
+  /// Returns streamed messages of progress.
   Stream<ImageMessage> imagine(String prompt) => _api.imagine(prompt);
 
+  /// Create a new variation based on the picture
+  ///
+  /// Returns streamed messages of progress.
   Stream<ImageMessage> variation(ImageMessage$Finish imageMessage, int index) =>
       _api.variation(imageMessage, index);
 }

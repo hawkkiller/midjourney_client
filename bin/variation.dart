@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
-import 'package:midjourney_client/src/core/model/midjourney/midjourney_message.dart';
+import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
 import 'package:midjourney_client/src/core/utils/logger.dart';
 import 'env.dart';
 
