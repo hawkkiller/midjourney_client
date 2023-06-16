@@ -1,8 +1,11 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
-import 'package:midjourney_client/src/core/utils/logger.dart';
+
 import 'env.dart';
 
 Future<void> main(List<Object> arguments) async {
@@ -13,15 +16,17 @@ Future<void> main(List<Object> arguments) async {
     loggerLevel: midjourney_client.MLoggerLevel.debug,
   );
 
-  final result = await client.imagine('Cat with sword').last;
+  final imagine = client.imagine('Cat with sword')..listen(print);
 
-  MLogger.i(result);
+  final result = await imagine.last;
 
   if (result is! ImageMessage$Finish) {
-    throw Exception('Expected ImageMessage\$Finish but got $result');
+    throw Exception('Expected ImageMessage\$Finish but got $imagine');
   }
 
-  client.variation(result, 1).listen(MLogger.i);
-  client.variation(result, 2).listen(MLogger.i);
-  client.variation(result, 3).listen(MLogger.i);
+  log(result.toString());
+
+  client.variation(result, 1).listen(print);
+  client.variation(result, 2).listen(print);
+  client.variation(result, 3).listen(print);
 }

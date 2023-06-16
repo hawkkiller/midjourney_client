@@ -1,7 +1,9 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
-import 'package:midjourney_client/src/core/utils/logger.dart';
+
 import 'env.dart';
 
 Future<void> main(List<Object> arguments) async {
@@ -12,5 +14,9 @@ Future<void> main(List<Object> arguments) async {
     loggerLevel: midjourney_client.MLoggerLevel.debug,
   );
 
-  client.imagine('Elephant on a tree').listen(MLogger.i);
+  final imagine = client.imagine('Cat in a hat')..listen(print);
+
+  final result = await imagine.last;
+
+  print('Result: $result');
 }
