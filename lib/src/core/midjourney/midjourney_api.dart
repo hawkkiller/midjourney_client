@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
 import 'package:midjourney_client/src/core/discord/discord_connection.dart';
+import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
 
 abstract interface class MidjourneyApi {
