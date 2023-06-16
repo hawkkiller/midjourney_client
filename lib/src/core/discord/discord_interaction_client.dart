@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
-import 'package:midjourney_client/src/core/discord/model/discord_message.dart';
 import 'package:midjourney_client/src/core/discord/model/interaction.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
@@ -15,11 +14,6 @@ typedef WaitMessageCallback = FutureOr<void> Function(
   ImageMessage msg,
   Exception? exception,
 );
-
-/// Associated nonce
-typedef DiscordMessageNonce = ({String? nonce, DiscordMessage$Message message});
-
-typedef WaitMessage = ({String nonce, String prompt});
 
 abstract interface class DiscordInteractionClient {
   /// Imagine a new picture with the given [prompt].

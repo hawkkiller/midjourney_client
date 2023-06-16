@@ -13,6 +13,19 @@ import 'package:ws/ws.dart';
 
 typedef ValueChanged<T> = void Function(T value);
 
+/// Discord message with `associated` nonce
+///
+///
+typedef DiscordMessageNonce = ({String? nonce, DiscordMessage$Message message});
+
+/// Model that is used to store temporary data about a message that is being waited for.
+///
+/// This model is created when `MESSAGE_CREATE` event is emitted at first.
+typedef WaitMessage = ({String nonce, String prompt});
+
+/// Discord connection interface
+///
+/// This is used to communicate with Discord.
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [nonce].
   Stream<ImageMessage> waitImageMessage(int nonce);
@@ -99,6 +112,10 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Handle created image message
+  /// 
+  /// If the message has a nonce, add it to the waiting pool and trigger an image generation started event.
+  /// 
+  /// If the message has no nonce, remove it from the waiting pool and trigger an image generation finished event.
   Future<void> _handleCreatedImageMessage(
     DiscordMessage$Message msg,
     WaitMessageCallback callback,
@@ -122,6 +139,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Handle updated image message
+  /// 
+  /// Trigger an image progress event.
   Future<void> _handleUpdatedImageMessage(
     DiscordMessage$Message msg,
     WaitMessageCallback callback,
@@ -142,6 +161,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Establish WebSocket connection and listen for incoming messages
+  /// 
+  /// This method is called once the client is initialized.
   void _establishWebSocketConnection() {
     _webSocketClient.connect(config.wsUrl);
     _webSocketClient.stream
@@ -149,10 +170,12 @@ final class DiscordConnectionImpl implements DiscordConnection {
         .map($discordMessageDecoder.convert)
         .whereType<DiscordMessage$Message>()
         .map(_processDiscordMessage)
-        .listen(_handleDiscordEvent);
+        .listen(_handleDiscordMessage);
   }
 
   /// Handle WebSocket state changes and perform related actions
+  /// 
+  /// This method is called once the client is initialized.
   void _handleWebSocketStateChanges() {
     _webSocketClient.stateChanges.listen((event) async {
       MLogger.d('WebSocket state change: $event');
@@ -164,6 +187,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Authenticate client with Discord server
+  /// 
+  /// This method is called once the connection is established.
   Future<void> _authenticate() async {
     final authJson = DiscordWs$Auth(config.token).toJson();
     await _webSocketClient.add(jsonEncode(authJson));
@@ -171,6 +196,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Initiate periodic heartbeat to maintain connection
+  /// 
+  /// This method is called once the connection is established.
   void _initiatePeriodicHeartbeat() {
     _connectionStateTimer?.cancel();
     _connectionStateTimer = Timer.periodic(
@@ -180,6 +207,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Send heartbeat signal to Discord server
+  /// 
+  /// This method is called periodically to maintain connection.
   Future<void> _sendHeartbeat(int seq) async {
     final heartbeatJson = DiscordWs$Heartbeat(seq).toJson();
     await _webSocketClient.add(jsonEncode(heartbeatJson));
@@ -193,7 +222,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Handle received Discord event
-  void _handleDiscordEvent(DiscordMessageNonce event) {
+  void _handleDiscordMessage(DiscordMessageNonce event) {
     final callback = _waitMessageCallbacks[event.nonce];
     callback?.call(event);
   }
