@@ -18,6 +18,8 @@ class MidjourneyConfig {
     wsUrl: 'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
   );
 
+  static const midjourneyBotId = '936929561302675456';
+
   MidjourneyConfig copyWith({
     String? baseUrl,
     String? wsUrl,

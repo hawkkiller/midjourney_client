@@ -66,7 +66,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
           // In case of error, add error to the stream and close it
           controller.addError(e);
           await controller.close();
-        } else {
+          return;
+        }
+        if (msg != null) {
           // Add new message to the stream
           controller.add(msg);
 
@@ -74,6 +76,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
           if (msg.finished) {
             await controller.close();
           }
+          return;
         }
       },
     );
@@ -83,18 +86,18 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Register a callback to be invoked once an image message with a specific nonce is received
-  void _registerImageMessageCallback(String nonce, WaitMessageCallback callback) {
+  void _registerImageMessageCallback(String nonce, ImageMessageCallback callback) {
     _waitMessageCallbacks[nonce] = (discordMsg) async {
-      await _processImageMessageCallback(discordMsg, callback, nonce);
+      await _imageMessageCallback(discordMsg, callback, nonce);
     };
   }
 
   /// Process the image message callback
   /// If the nonce of the incoming message matches the expected nonce,
   /// handle the message according to its state and invoke the callback with appropriate arguments
-  Future<void> _processImageMessageCallback(
+  Future<void> _imageMessageCallback(
     DiscordMessageNonce messageNonce,
-    WaitMessageCallback callback,
+    ImageMessageCallback callback,
     String nonce,
   ) async {
     if (messageNonce.nonce != nonce) return;
@@ -112,13 +115,13 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Handle created image message
-  /// 
+  ///
   /// If the message has a nonce, add it to the waiting pool and trigger an image generation started event.
-  /// 
+  ///
   /// If the message has no nonce, remove it from the waiting pool and trigger an image generation finished event.
   Future<void> _handleCreatedImageMessage(
     DiscordMessage$Message msg,
-    WaitMessageCallback callback,
+    ImageMessageCallback callback,
   ) async {
     if (msg.nonce != null) {
       _waitMessages[msg.id] = (nonce: msg.nonce!, prompt: _content2Prompt(msg.content));
@@ -139,11 +142,11 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Handle updated image message
-  /// 
+  ///
   /// Trigger an image progress event.
   Future<void> _handleUpdatedImageMessage(
     DiscordMessage$Message msg,
-    WaitMessageCallback callback,
+    ImageMessageCallback callback,
   ) async {
     final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content);
     final progress = progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : 0;
@@ -161,7 +164,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Establish WebSocket connection and listen for incoming messages
-  /// 
+  ///
   /// This method is called once the client is initialized.
   void _establishWebSocketConnection() {
     _webSocketClient.connect(config.wsUrl);
@@ -169,12 +172,17 @@ final class DiscordConnectionImpl implements DiscordConnection {
         .whereType<String>()
         .map($discordMessageDecoder.convert)
         .whereType<DiscordMessage$Message>()
-        .map(_processDiscordMessage)
+        .where((event) {
+          final isChannel = event.channelId == config.channelId;
+          final isMidjourneyBot = event.author.id == MidjourneyConfig.midjourneyBotId;
+          return isChannel && isMidjourneyBot;
+        })
+        .map(_associateDiscordMessageWithNonce)
         .listen(_handleDiscordMessage);
   }
 
   /// Handle WebSocket state changes and perform related actions
-  /// 
+  ///
   /// This method is called once the client is initialized.
   void _handleWebSocketStateChanges() {
     _webSocketClient.stateChanges.listen((event) async {
@@ -187,7 +195,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Authenticate client with Discord server
-  /// 
+  ///
   /// This method is called once the connection is established.
   Future<void> _authenticate() async {
     final authJson = DiscordWs$Auth(config.token).toJson();
@@ -196,7 +204,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Initiate periodic heartbeat to maintain connection
-  /// 
+  ///
   /// This method is called once the connection is established.
   void _initiatePeriodicHeartbeat() {
     _connectionStateTimer?.cancel();
@@ -207,7 +215,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Send heartbeat signal to Discord server
-  /// 
+  ///
   /// This method is called periodically to maintain connection.
   Future<void> _sendHeartbeat(int seq) async {
     final heartbeatJson = DiscordWs$Heartbeat(seq).toJson();
@@ -216,7 +224,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
-  DiscordMessageNonce _processDiscordMessage(DiscordMessage$Message msg) {
+  DiscordMessageNonce _associateDiscordMessageWithNonce(DiscordMessage$Message msg) {
     final nonce = _getNonceFromMessage(msg);
     return (nonce: nonce, message: msg);
   }

@@ -10,8 +10,8 @@ import 'package:midjourney_client/src/core/utils/logger.dart';
 import 'package:midjourney_client/src/core/utils/rate_limiter.dart';
 import 'package:snowflaker/snowflaker.dart';
 
-typedef WaitMessageCallback = FutureOr<void> Function(
-  ImageMessage msg,
+typedef ImageMessageCallback = FutureOr<void> Function(
+  ImageMessage? msg,
   Exception? exception,
 );
 
