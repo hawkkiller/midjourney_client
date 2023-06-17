@@ -20,7 +20,7 @@ Future<void> main(List<Object> arguments) async {
 
   final result = await imagine.last;
 
-  if (result is! ImageMessage$Finish) {
+  if (result is! MidjourneyMessage$ImageFinish) {
     throw Exception('Expected ImageMessage\$Finish but got $imagine');
   }
 

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:midjourney_client/midjourney_client.dart';
 import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
 import 'package:midjourney_client/src/core/discord/model/discord_message.dart';
 import 'package:midjourney_client/src/core/discord/model/discord_ws.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
@@ -28,7 +29,7 @@ typedef WaitMessage = ({String nonce, String prompt});
 /// This is used to communicate with Discord.
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [nonce].
-  Stream<ImageMessage> waitImageMessage(int nonce);
+  Stream<MidjourneyMessage$Image> waitImageMessage(int nonce);
 }
 
 final class DiscordConnectionImpl implements DiscordConnection {
@@ -51,13 +52,13 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// Callbacks for waiting messages
   final Map<String, ValueChanged<DiscordMessageNonce>> _waitMessageCallbacks = {};
 
-  /// Wait for an [ImageMessage] with a given [nonce]. Returns a stream of [ImageMessage].
+  /// Wait for an [MidjourneyMessage$Image] with a given [nonce]. Returns a stream of [MidjourneyMessage$Image].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
   /// It registers a callback function that adds new messages to the stream or, in case of an error,
   /// adds the error to the stream and then closes it.
   @override
-  Stream<ImageMessage> waitImageMessage(int nonce) async* {
-    final controller = StreamController<ImageMessage>.broadcast(sync: true);
+  Stream<MidjourneyMessage$Image> waitImageMessage(int nonce) async* {
+    final controller = StreamController<MidjourneyMessage$Image>.broadcast(sync: true);
 
     _registerImageMessageCallback(
       nonce.toString(),
@@ -106,12 +107,22 @@ final class DiscordConnectionImpl implements DiscordConnection {
     final msg = messageNonce.message;
 
     if (msg.created) {
-      await _handleCreatedImageMessage(msg, callback);
+      await _handleCreatedImageMessage(msg, callback, nonce);
     }
 
     if (msg.updated && msg.nonce == null && (msg.attachments?.isNotEmpty ?? false)) {
       await _handleUpdatedImageMessage(msg, callback);
     }
+  }
+
+  Future<void> _imageMessageError({
+    required ImageMessageCallback callback,
+    required String error,
+    required String nonce,
+  }) async {
+    callback(null, DiscordException(error));
+    _waitMessageCallbacks.remove(nonce);
+    _waitMessages.remove(nonce);
   }
 
   /// Handle created image message
@@ -122,20 +133,54 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _handleCreatedImageMessage(
     DiscordMessage$Message msg,
     ImageMessageCallback callback,
+    String nonce,
   ) async {
     if (msg.nonce != null) {
+      // check if there is an issue with message, i.e. error or warning
+      if (msg.embeds.isNotEmpty) {
+        final embed = msg.embeds.first;
+
+        // Discord error color
+        if (embed.color == 16711680) {
+          await _imageMessageError(
+            callback: callback,
+            error: embed.description,
+            nonce: nonce,
+          );
+          return;
+        }
+
+        if (embed.color == 16776960) {
+          MLogger.i('Discord warning: ${embed.description}');
+        }
+
+        if (embed.title.contains('continue') && embed.description.contains("verify you're human")) {
+          // TODO(MichaelLazebny): handle captcha
+          return;
+        }
+
+        if (embed.title.contains('Invalid')) {
+          await _imageMessageError(
+            callback: callback,
+            error: embed.description,
+            nonce: nonce,
+          );
+          return;
+        }
+      }
       _waitMessages[msg.id] = (nonce: msg.nonce!, prompt: _content2Prompt(msg.content));
 
       // Trigger an image generation started event
       await callback(
-        ImageMessage$Progress(progress: 0, id: msg.id, content: msg.content),
+        MidjourneyMessage$ImageProgress(progress: 0, id: msg.id, content: msg.content),
         null,
       );
     } else {
       // Trigger an image generation finished event
       _waitMessageCallbacks.remove(msg.nonce);
       await callback(
-        ImageMessage$Finish(id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
+        MidjourneyMessage$ImageFinish(
+            id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
         null,
       );
     }
@@ -153,7 +198,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     // Trigger an image progress event
     await callback(
-      ImageMessage$Progress(
+      MidjourneyMessage$ImageProgress(
         progress: progress ?? 0,
         id: msg.id,
         content: msg.content,
