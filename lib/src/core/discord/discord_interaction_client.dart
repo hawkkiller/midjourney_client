@@ -11,7 +11,7 @@ import 'package:midjourney_client/src/core/utils/rate_limiter.dart';
 import 'package:snowflaker/snowflaker.dart';
 
 typedef ImageMessageCallback = FutureOr<void> Function(
-  ImageMessage? msg,
+  MidjourneyMessage$Image? msg,
   Exception? exception,
 );
 
@@ -20,7 +20,7 @@ abstract interface class DiscordInteractionClient {
   int imagine(String prompt);
 
   /// Create a new variation based on the picture
-  int variation(ImageMessage$Finish imageMessage, int index);
+  int variation(MidjourneyMessage$Image imageMessage, int index);
 }
 
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
@@ -116,7 +116,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  int variation(ImageMessage$Finish imageMessage, int index) {
+  int variation(MidjourneyMessage$Image imageMessage, int index) {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
     final variationPayload = Interaction(

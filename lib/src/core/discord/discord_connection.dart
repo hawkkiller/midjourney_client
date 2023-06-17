@@ -28,7 +28,7 @@ typedef WaitMessage = ({String nonce, String prompt});
 /// This is used to communicate with Discord.
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [nonce].
-  Stream<ImageMessage> waitImageMessage(int nonce);
+  Stream<MidjourneyMessage$Image> waitImageMessage(int nonce);
 }
 
 final class DiscordConnectionImpl implements DiscordConnection {
@@ -51,13 +51,13 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// Callbacks for waiting messages
   final Map<String, ValueChanged<DiscordMessageNonce>> _waitMessageCallbacks = {};
 
-  /// Wait for an [ImageMessage] with a given [nonce]. Returns a stream of [ImageMessage].
+  /// Wait for an [MidjourneyMessage$Image] with a given [nonce]. Returns a stream of [MidjourneyMessage$Image].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
   /// It registers a callback function that adds new messages to the stream or, in case of an error,
   /// adds the error to the stream and then closes it.
   @override
-  Stream<ImageMessage> waitImageMessage(int nonce) async* {
-    final controller = StreamController<ImageMessage>.broadcast(sync: true);
+  Stream<MidjourneyMessage$Image> waitImageMessage(int nonce) async* {
+    final controller = StreamController<MidjourneyMessage$Image>.broadcast(sync: true);
 
     _registerImageMessageCallback(
       nonce.toString(),
@@ -128,14 +128,14 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
       // Trigger an image generation started event
       await callback(
-        ImageMessage$Progress(progress: 0, id: msg.id, content: msg.content),
+        MidjourneyMessage$ImageProgress(progress: 0, id: msg.id, content: msg.content),
         null,
       );
     } else {
       // Trigger an image generation finished event
       _waitMessageCallbacks.remove(msg.nonce);
       await callback(
-        ImageMessage$Finish(id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
+        MidjourneyMessage$ImageFinish(id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
         null,
       );
     }
@@ -153,7 +153,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     // Trigger an image progress event
     await callback(
-      ImageMessage$Progress(
+      MidjourneyMessage$ImageProgress(
         progress: progress ?? 0,
         id: msg.id,
         content: msg.content,
