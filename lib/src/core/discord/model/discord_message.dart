@@ -38,6 +38,7 @@ sealed class DiscordMessage$Message extends DiscordMessage {
     required this.content,
     required this.embeds,
     required this.author,
+    required this.channelId,
     this.nonce,
     this.attachments,
   });
@@ -48,6 +49,7 @@ sealed class DiscordMessage$Message extends DiscordMessage {
   final Author author;
   final String? nonce;
   final List<Attachment>? attachments;
+  final String channelId;
 
   @override
   String toString() => (
@@ -66,12 +68,12 @@ sealed class DiscordMessage$Message extends DiscordMessage {
           ),
       )
           .toString();
-  
+
   bool get created => switch (this) {
         DiscordMessage$MessageCreate() => true,
         _ => false,
-      }; 
-  
+      };
+
   bool get updated => switch (this) {
         DiscordMessage$MessageUpdate() => true,
         _ => false,
@@ -84,6 +86,7 @@ final class DiscordMessage$MessageCreate extends DiscordMessage$Message {
     required super.content,
     required super.embeds,
     required super.author,
+    required super.channelId,
     super.nonce,
     super.attachments,
   });
@@ -100,6 +103,7 @@ final class DiscordMessage$MessageCreate extends DiscordMessage$Message {
         embeds: (json['embeds']! as List<Object?>)
             .map((e) => Embed.fromJson(e! as Map<String, Object?>))
             .toList(),
+        channelId: json['channel_id']! as String,
       );
 }
 
@@ -109,6 +113,7 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
     required super.embeds,
     required super.content,
     required super.author,
+    required super.channelId,
     super.attachments,
     super.nonce,
   });
@@ -125,6 +130,7 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
         embeds: (json['embeds']! as List<Object?>)
             .map((e) => Embed.fromJson(e! as Map<String, Object?>))
             .toList(),
+        channelId: json['channel_id']! as String,
       );
 }
 
@@ -226,14 +232,14 @@ final class Author {
         username: json['username']! as String,
         discriminator: json['discriminator']! as String,
         id: json['id']! as String,
-        bot: json['bot']! as bool,
+        bot: json['bot'] as bool?,
         avatar: json['avatar']! as String?,
       );
 
   final String username;
   final String discriminator;
   final String id;
-  final bool bot;
+  final bool? bot;
   final String? avatar;
 
   @override
