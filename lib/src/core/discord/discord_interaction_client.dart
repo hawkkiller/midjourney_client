@@ -12,7 +12,7 @@ import 'package:snowflaker/snowflaker.dart';
 
 typedef ImageMessageCallback = FutureOr<void> Function(
   MidjourneyMessage$Image? msg,
-  Exception? exception,
+  Exception? error,
 );
 
 abstract interface class DiscordInteractionClient {

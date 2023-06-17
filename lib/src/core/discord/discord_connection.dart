@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:midjourney_client/midjourney_client.dart';
 import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
 import 'package:midjourney_client/src/core/discord/model/discord_message.dart';
 import 'package:midjourney_client/src/core/discord/model/discord_ws.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
@@ -106,12 +107,22 @@ final class DiscordConnectionImpl implements DiscordConnection {
     final msg = messageNonce.message;
 
     if (msg.created) {
-      await _handleCreatedImageMessage(msg, callback);
+      await _handleCreatedImageMessage(msg, callback, nonce);
     }
 
     if (msg.updated && msg.nonce == null && (msg.attachments?.isNotEmpty ?? false)) {
       await _handleUpdatedImageMessage(msg, callback);
     }
+  }
+
+  Future<void> _imageMessageError({
+    required ImageMessageCallback callback,
+    required String error,
+    required String nonce,
+  }) async {
+    callback(null, DiscordException(error));
+    _waitMessageCallbacks.remove(nonce);
+    _waitMessages.remove(nonce);
   }
 
   /// Handle created image message
@@ -122,8 +133,41 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _handleCreatedImageMessage(
     DiscordMessage$Message msg,
     ImageMessageCallback callback,
+    String nonce,
   ) async {
     if (msg.nonce != null) {
+      // check if there is an issue with message, i.e. error or warning
+      if (msg.embeds.isNotEmpty) {
+        final embed = msg.embeds.first;
+
+        // Discord error color
+        if (embed.color == 16711680) {
+          await _imageMessageError(
+            callback: callback,
+            error: embed.description,
+            nonce: nonce,
+          );
+          return;
+        }
+
+        if (embed.color == 16776960) {
+          MLogger.i('Discord warning: ${embed.description}');
+        }
+
+        if (embed.title.contains('continue') && embed.description.contains("verify you're human")) {
+          // TODO(MichaelLazebny): handle captcha
+          return;
+        }
+
+        if (embed.title.contains('Invalid')) {
+          await _imageMessageError(
+            callback: callback,
+            error: embed.description,
+            nonce: nonce,
+          );
+          return;
+        }
+      }
       _waitMessages[msg.id] = (nonce: msg.nonce!, prompt: _content2Prompt(msg.content));
 
       // Trigger an image generation started event
@@ -135,7 +179,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
       // Trigger an image generation finished event
       _waitMessageCallbacks.remove(msg.nonce);
       await callback(
-        MidjourneyMessage$ImageFinish(id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
+        MidjourneyMessage$ImageFinish(
+            id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
         null,
       );
     }
