@@ -1,4 +1,4 @@
-import 'package:midjourney_client/src/core/model/discord/interaction.dart';
+import 'package:midjourney_client/src/core/discord/model/interaction.dart';
 import 'package:snowflaker/snowflaker.dart';
 import 'package:test/test.dart';
 
