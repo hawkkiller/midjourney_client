@@ -7,15 +7,18 @@ import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.d
 abstract interface class MidjourneyApi {
   const MidjourneyApi();
 
+  /// Initialize the api.
+  Future<void> init();
+
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
   Stream<MidjourneyMessage$Image> imagine(String prompt);
 
   /// Create a new variation based on the picture
-  /// 
+  ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$Image imageMessage, int index); 
+  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$Image imageMessage, int index);
 }
 
 final class MidjourneyApiDiscordImpl extends MidjourneyApi {
@@ -37,11 +40,15 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   }
 
   @override
-  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$Image imageMessage, int index) async* {
+  Stream<MidjourneyMessage$Image> variation(
+      MidjourneyMessage$Image imageMessage, int index) async* {
     if (index < 0 && index > 4) {
       throw ArgumentError.value(index, 'index', 'Index must be between 0 and 5');
     }
     final nonce = interactionClient.variation(imageMessage, index);
     yield* connection.waitImageMessage(nonce);
   }
+
+  @override
+  Future<void> init() => connection.init();
 }

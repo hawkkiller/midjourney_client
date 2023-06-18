@@ -41,6 +41,8 @@ class Midjourney {
   /// The api to use.
   late final MidjourneyApi _api;
 
+  Future<void> init() => _api.init();
+
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
@@ -49,6 +51,6 @@ class Midjourney {
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$ImageFinish imageMessage, int index) =>
+  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$Image imageMessage, int index) =>
       _api.variation(imageMessage, index).asBroadcastStream();
 }

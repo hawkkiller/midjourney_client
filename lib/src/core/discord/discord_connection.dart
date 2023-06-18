@@ -30,11 +30,13 @@ typedef WaitMessage = ({String nonce, String prompt});
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [nonce].
   Stream<MidjourneyMessage$Image> waitImageMessage(int nonce);
+
+  /// Initialize the connection.
+  Future<void> init();
 }
 
 final class DiscordConnectionImpl implements DiscordConnection {
   DiscordConnectionImpl({required this.config}) {
-    _establishWebSocketConnection();
     _handleWebSocketStateChanges();
   }
 
@@ -211,8 +213,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// Establish WebSocket connection and listen for incoming messages
   ///
   /// This method is called once the client is initialized.
-  void _establishWebSocketConnection() {
-    _webSocketClient.connect(config.wsUrl);
+  Future<void> _establishWebSocketConnection() async {
+    await _webSocketClient.connect(config.wsUrl);
     _webSocketClient.stream
         .whereType<String>()
         .map($discordMessageDecoder.convert)
@@ -349,4 +351,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     _webSocketClient.close();
     _connectionStateTimer?.cancel();
   }
+  
+  @override
+  Future<void> init() => _establishWebSocketConnection();
 }

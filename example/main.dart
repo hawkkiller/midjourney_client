@@ -14,6 +14,8 @@ Future<void> main(List<Object> arguments) async {
     loggerLevel: midjourney_client.MLoggerLevel.debug,
   );
 
+  await client.init();
+
   final imagine = client.imagine('Elephant on a tree')..listen(print);
   final result = await imagine.last;
 
