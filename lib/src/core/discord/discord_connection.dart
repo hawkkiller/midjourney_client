@@ -182,7 +182,10 @@ final class DiscordConnectionImpl implements DiscordConnection {
       _waitMessageCallbacks.remove(msg.nonce);
       await callback(
         MidjourneyMessage$ImageFinish(
-            id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
+          id: msg.id,
+          content: msg.content,
+          uri: msg.attachments!.first.url,
+        ),
         null,
       );
     }
@@ -351,7 +354,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     _webSocketClient.close();
     _connectionStateTimer?.cancel();
   }
-  
+
   @override
   Future<void> init() => _establishWebSocketConnection();
 }
