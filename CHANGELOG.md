@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.2.0-dev.2 (2023-06-18)
+
+- Stick to dart line length 80
+
 ## 0.2.0-dev.1 (2023-06-18)
 
 - Implemented `variation` command.

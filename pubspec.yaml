@@ -2,7 +2,7 @@ name: midjourney_client
 description: > 
   Unofficial midjourney client that gives you possibility to generates images! 
   Now, it utilizes the Discord API to communicate with the bot.
-version: 0.2.0-dev.1
+version: 0.2.0-dev.2
 repository: https://github.com/hawkkiller/midjourney-client
 
 environment:
