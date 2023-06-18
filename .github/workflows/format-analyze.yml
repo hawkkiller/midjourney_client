@@ -2,7 +2,8 @@ name: Format & Analyze
 
 on:
     push:
-        
+        branches: [main]
+
     pull_request:
         branches: [main]
 jobs:
