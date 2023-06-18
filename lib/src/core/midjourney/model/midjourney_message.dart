@@ -50,8 +50,7 @@ class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }
 
 class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
@@ -73,6 +72,5 @@ class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }

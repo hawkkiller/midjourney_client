@@ -6,7 +6,7 @@ version: 0.2.0-dev.1
 repository: https://github.com/hawkkiller/midjourney-client
 
 environment:
-  sdk: ^3.0.0
+  sdk: ^3.0.5
 
 dependencies:
   snowflaker: ^1.0.3
