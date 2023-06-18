@@ -53,6 +53,8 @@ class Midjourney {
   ///
   /// Returns streamed messages of progress.
   Stream<MidjourneyMessage$Image> variation(
-          MidjourneyMessage$Image imageMessage, int index) =>
+    MidjourneyMessage$Image imageMessage,
+    int index,
+  ) =>
       _api.variation(imageMessage, index).asBroadcastStream();
 }
