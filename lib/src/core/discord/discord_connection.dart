@@ -360,7 +360,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     final prompt = _content2Prompt(content);
 
     MapEntry<String, WaitMessage>? entry;
-  
+
     for (final e in _waitMessages.entries) {
       if (e.value.prompt == prompt) {
         entry = e;
