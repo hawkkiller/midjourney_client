@@ -51,7 +51,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   final Map<String, WaitMessage> _waitMessages = {};
 
   /// Callbacks for waiting messages
-  final Map<String, ValueChanged<DiscordMessageNonce>> _waitMessageCallbacks = {};
+  final Map<String, ValueChanged<DiscordMessageNonce>> _waitMessageCallbacks =
+      {};
 
   /// Wait for an [MidjourneyMessage$Image] with a given [nonce]. Returns a stream of [MidjourneyMessage$Image].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
@@ -59,7 +60,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// adds the error to the stream and then closes it.
   @override
   Stream<MidjourneyMessage$Image> waitImageMessage(int nonce) async* {
-    final controller = StreamController<MidjourneyMessage$Image>.broadcast(sync: true);
+    final controller =
+        StreamController<MidjourneyMessage$Image>.broadcast(sync: true);
 
     _registerImageMessageCallback(
       nonce.toString(),
@@ -114,7 +116,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
       await _handleCreatedImageMessage(msg, callback, nonce);
     }
 
-    if (msg.updated && msg.nonce == null && (msg.attachments?.isNotEmpty ?? false)) {
+    if (msg.updated &&
+        msg.nonce == null &&
+        (msg.attachments?.isNotEmpty ?? false)) {
       await _handleUpdatedImageMessage(msg, callback);
     }
   }
@@ -158,7 +162,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
           MLogger.i('Discord warning: ${embed.description}');
         }
 
-        if (embed.title.contains('continue') && embed.description.contains("verify you're human")) {
+        if (embed.title.contains('continue') &&
+            embed.description.contains("verify you're human")) {
           // TODO(MichaelLazebny): handle captcha
           return;
         }
@@ -172,11 +177,16 @@ final class DiscordConnectionImpl implements DiscordConnection {
           return;
         }
       }
-      _waitMessages[msg.id] = (nonce: msg.nonce!, prompt: _content2Prompt(msg.content));
+      _waitMessages[msg.id] =
+          (nonce: msg.nonce!, prompt: _content2Prompt(msg.content));
 
       // Trigger an image generation started event
       await callback(
-        MidjourneyMessage$ImageProgress(progress: 0, id: msg.id, content: msg.content),
+        MidjourneyMessage$ImageProgress(
+          progress: 0,
+          id: msg.id,
+          content: msg.content,
+        ),
         null,
       );
     } else {
@@ -201,7 +211,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
     ImageMessageCallback callback,
   ) async {
     final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content);
-    final progress = progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : 0;
+    final progress =
+        progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : 0;
 
     // Trigger an image progress event
     await callback(
@@ -226,7 +237,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
         .whereType<DiscordMessage$Message>()
         .where((event) {
           final isChannel = event.channelId == config.channelId;
-          final isMidjourneyBot = event.author.id == MidjourneyConfig.midjourneyBotId;
+          final isMidjourneyBot =
+              event.author.id == MidjourneyConfig.midjourneyBotId;
           return isChannel && isMidjourneyBot;
         })
         .map(_associateDiscordMessageWithNonce)
@@ -276,7 +288,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
-  DiscordMessageNonce _associateDiscordMessageWithNonce(DiscordMessage$Message msg) {
+  DiscordMessageNonce _associateDiscordMessageWithNonce(
+    DiscordMessage$Message msg,
+  ) {
     final nonce = _getNonceFromMessage(msg);
     return (nonce: nonce, message: msg);
   }
@@ -340,7 +354,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Get wait message by content
-  ({WaitMessage? waitMessage, String? id}) _getWaitMessageByContent(String content) {
+  ({WaitMessage? waitMessage, String? id}) _getWaitMessageByContent(
+    String content,
+  ) {
     final prompt = _content2Prompt(content);
 
     MapEntry<String, WaitMessage>? entry;

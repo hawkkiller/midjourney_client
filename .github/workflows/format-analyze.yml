@@ -23,7 +23,7 @@ jobs:
               run: dart analyze --fatal-infos --fatal-warnings .
 
             - name: Format
-              run: dart format --set-exit-if-changed --line-length 100 .
+              run: dart format --set-exit-if-changed .
             
             - name: Validate
               run: dart pub publish --dry-run
