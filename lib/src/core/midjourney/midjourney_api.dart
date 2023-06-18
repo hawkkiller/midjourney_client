@@ -18,7 +18,8 @@ abstract interface class MidjourneyApi {
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$Image imageMessage, int index);
+  Stream<MidjourneyMessage$Image> variation(
+      MidjourneyMessage$Image imageMessage, int index);
 }
 
 final class MidjourneyApiDiscordImpl extends MidjourneyApi {
@@ -34,7 +35,8 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   Stream<MidjourneyMessage$Image> imagine(String prompt) async* {
     // Add a seed to the prompt to avoid collisions because prompt
     // is the only thing that is lasted between requests.
-    prompt = '$prompt --seed ${DateTime.now().microsecondsSinceEpoch % 1000000}';
+    prompt =
+        '$prompt --seed ${DateTime.now().microsecondsSinceEpoch % 1000000}';
     final nonce = interactionClient.imagine(prompt);
     yield* connection.waitImageMessage(nonce);
   }
@@ -45,7 +47,8 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
     int index,
   ) async* {
     if (index < 0 && index > 4) {
-      throw ArgumentError.value(index, 'index', 'Index must be between 0 and 5');
+      throw ArgumentError.value(
+          index, 'index', 'Index must be between 0 and 5');
     }
     final nonce = interactionClient.variation(imageMessage, index);
     yield* connection.waitImageMessage(nonce);
