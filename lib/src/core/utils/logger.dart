@@ -1,4 +1,4 @@
-import 'package:l/l.dart';
+import 'dart:developer';
 
 enum MLoggerLevel {
   /// show all messages
@@ -53,13 +53,13 @@ mixin MLogger {
 
   static void d(Object obj) {
     if (level.isDebug) {
-      l.d(obj);
+      log(obj.toString(), name: 'DEBUG');
     }
   }
 
   static void i(Object obj) {
     if (level.isInfo) {
-      l.i(obj);
+      log(obj.toString(), name: 'INFO');
     }
   }
 
@@ -68,7 +68,7 @@ mixin MLogger {
     StackTrace? stackTrace,
   ]) {
     if (level.isWarning) {
-      l.w(obj, stackTrace ?? StackTrace.current);
+      log(obj.toString(), name: 'WARNING', stackTrace: stackTrace);
     }
   }
 
@@ -77,13 +77,13 @@ mixin MLogger {
     StackTrace? stackTrace,
   ]) {
     if (level.isError) {
-      l.e(obj, stackTrace ?? StackTrace.current);
+      log(obj.toString(), name: 'ERROR', stackTrace: stackTrace);
     }
   }
 
   static void v(Object obj) {
     if (level.isVerbose) {
-      l.v(obj);
+      log(obj.toString(), name: 'VERBOSE');
     }
   }
 }

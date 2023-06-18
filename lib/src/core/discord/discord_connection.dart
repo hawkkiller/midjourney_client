@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:collection/collection.dart';
 import 'package:midjourney_client/midjourney_client.dart';
 import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
 import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
@@ -360,9 +359,14 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ) {
     final prompt = _content2Prompt(content);
 
-    final entry = _waitMessages.entries.firstWhereOrNull(
-      (element) => element.value.prompt == prompt,
-    );
+    MapEntry<String, WaitMessage>? entry;
+
+    for (final e in _waitMessages.entries) {
+      if (e.value.prompt == prompt) {
+        entry = e;
+        break;
+      }
+    }
 
     final value = _waitMessages.remove(entry?.key);
 

@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.2.0-dev.3 (2023-06-18)
+
+- Removed useless dependencies
+
 ## 0.2.0-dev.2 (2023-06-18)
 
 - Stick to dart line length 80
