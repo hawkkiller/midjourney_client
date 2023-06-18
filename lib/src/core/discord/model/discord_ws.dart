@@ -1,4 +1,4 @@
-/// Base discord model 
+/// Base discord model
 sealed class DiscordWs {
   const DiscordWs();
 

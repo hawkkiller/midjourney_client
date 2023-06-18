@@ -1,0 +1,26 @@
+name: Format & Analyze
+
+on:
+    push:
+        
+    pull_request:
+        branches: [main]
+jobs:
+    analyze:
+        name: Format & Analyze
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Get Packages
+              run: dart pub get
+
+            - name: Analyze
+              run: dart analyze --fatal-infos --fatal-warnings .
+
+            - name: Format
+              run: dart format --set-exit-if-changed --line-length 100 .
+            
+            - name: Validate
+              run: dart pub publish --dry-run

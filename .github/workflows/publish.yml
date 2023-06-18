@@ -11,5 +11,3 @@ jobs:
       id-token: 'write'
     
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
-    # with:
-    #   working-directory: path/to/package/within/repository
