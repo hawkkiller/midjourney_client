@@ -19,7 +19,7 @@ sealed class MidjourneyMessage$Image extends MidjourneyMessage {
         final MidjourneyMessage$ImageProgress v => v.progress,
         MidjourneyMessage$ImageFinish() => 100,
       };
-  
+
   bool get finished => switch (this) {
         MidjourneyMessage$ImageProgress() => false,
         MidjourneyMessage$ImageFinish() => true,
@@ -50,8 +50,7 @@ class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }
 
 class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
@@ -73,6 +72,5 @@ class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }

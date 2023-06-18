@@ -28,8 +28,7 @@ final class DiscordMessage$Unsupported extends DiscordMessage {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }
 
 sealed class DiscordMessage$Message extends DiscordMessage {
@@ -66,8 +65,7 @@ sealed class DiscordMessage$Message extends DiscordMessage {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 
   bool get created => switch (this) {
         DiscordMessage$MessageCreate() => true,
@@ -164,8 +162,7 @@ final class Embed {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }
 
 @immutable
@@ -214,8 +211,7 @@ final class Attachment {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }
 
 @immutable
@@ -255,8 +251,7 @@ final class Author {
               ')',
             ],
           ),
-      )
-          .toString();
+      ).toString();
 }
 
 const $discordMessageDecoder = DiscordMessageDecoder();

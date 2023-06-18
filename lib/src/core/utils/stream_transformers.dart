@@ -25,9 +25,8 @@ extension TransformByHandlers<S> on Stream<S> {
     final handleError = onError ?? _defaultHandleError;
     final handleDone = onDone ?? _defaultHandleDone;
 
-    final controller = isBroadcast
-        ? StreamController<T>.broadcast(sync: true)
-        : StreamController<T>(sync: true);
+    final controller =
+        isBroadcast ? StreamController<T>.broadcast(sync: true) : StreamController<T>(sync: true);
 
     StreamSubscription<S>? subscription;
     controller.onListen = () {
@@ -65,7 +64,10 @@ extension TransformByHandlers<S> on Stream<S> {
   }
 
   static void _defaultHandleError<T>(
-      Object error, StackTrace stackTrace, EventSink<T> sink,) {
+    Object error,
+    StackTrace stackTrace,
+    EventSink<T> sink,
+  ) {
     sink.addError(error, stackTrace);
   }
 

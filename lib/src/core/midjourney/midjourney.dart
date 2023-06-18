@@ -46,11 +46,15 @@ class Midjourney {
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> imagine(String prompt) => _api.imagine(prompt).asBroadcastStream();
+  Stream<MidjourneyMessage$Image> imagine(String prompt) =>
+      _api.imagine(prompt).asBroadcastStream();
 
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(MidjourneyMessage$Image imageMessage, int index) =>
+  Stream<MidjourneyMessage$Image> variation(
+    MidjourneyMessage$Image imageMessage,
+    int index,
+  ) =>
       _api.variation(imageMessage, index).asBroadcastStream();
 }

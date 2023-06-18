@@ -89,7 +89,10 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Register a callback to be invoked once an image message with a specific nonce is received
-  void _registerImageMessageCallback(String nonce, ImageMessageCallback callback) {
+  void _registerImageMessageCallback(
+    String nonce,
+    ImageMessageCallback callback,
+  ) {
     _waitMessageCallbacks[nonce] = (discordMsg) async {
       await _imageMessageCallback(discordMsg, callback, nonce);
     };
@@ -182,7 +185,10 @@ final class DiscordConnectionImpl implements DiscordConnection {
       _waitMessageCallbacks.remove(msg.nonce);
       await callback(
         MidjourneyMessage$ImageFinish(
-            id: msg.id, content: msg.content, uri: msg.attachments!.first.url),
+          id: msg.id,
+          content: msg.content,
+          uri: msg.attachments!.first.url,
+        ),
         null,
       );
     }
@@ -351,7 +357,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     _webSocketClient.close();
     _connectionStateTimer?.cancel();
   }
-  
+
   @override
   Future<void> init() => _establishWebSocketConnection();
 }

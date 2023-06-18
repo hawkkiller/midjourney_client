@@ -39,7 +39,10 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     const Duration(seconds: 2),
   );
 
-  void _rateLimitedInteractions(Map<String, Object?> body) => rateLimiter.add(body);
+  void _rateLimitedInteractions(
+    Map<String, Object?> body,
+  ) =>
+      rateLimiter.add(body);
 
   /// Execute a Discord interaction.
   Future<void> _interactions(Map<String, Object?> body) async {
