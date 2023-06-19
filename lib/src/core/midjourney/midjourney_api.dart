@@ -24,12 +24,12 @@ abstract interface class MidjourneyApi {
   );
 
   /// Upscale the given [imageMessage] to better quality.
-  /// 
+  ///
   /// Returns streamed messages of progress.
   Stream<MidjourneyMessage$Image> upscale(
     MidjourneyMessage$Image imageMessage,
     int index,
-  ); 
+  );
 }
 
 final class MidjourneyApiDiscordImpl extends MidjourneyApi {
