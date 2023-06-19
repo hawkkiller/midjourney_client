@@ -56,7 +56,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
     MidjourneyMessage$Image imageMessage,
     int index,
   ) async* {
-    if (index < 0 && index > 4) {
+    if (index < 1 && index > 4) {
       throw ArgumentError.value(
         index,
         'index',
@@ -72,7 +72,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
     MidjourneyMessage$Image imageMessage,
     int index,
   ) async* {
-    if (index < 0 && index > 4) {
+    if (index < 1 && index > 4) {
       throw ArgumentError.value(
         index,
         'index',

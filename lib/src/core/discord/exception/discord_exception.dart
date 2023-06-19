@@ -6,7 +6,7 @@ abstract interface class DiscordException implements Exception {
   String get message;
 }
 
-class _DiscordException implements DiscordException {
+final class _DiscordException implements DiscordException {
   _DiscordException(this.message);
 
   @override
@@ -14,4 +14,21 @@ class _DiscordException implements DiscordException {
 
   @override
   String toString() => 'DiscordException: $message';
+}
+
+final class DiscordInteractionException implements DiscordException {
+  const DiscordInteractionException({
+    required this.code,
+    required this.message,
+  });
+
+  /// The error code.
+  final int code;
+
+  /// The error message.
+  @override
+  final String message;
+
+  @override
+  String toString() => 'DiscordInteractionException: $message';
 }

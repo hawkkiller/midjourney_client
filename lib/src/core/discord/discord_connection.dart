@@ -51,8 +51,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   final Map<String, WaitMessage> _waitMessages = {};
 
   /// Callbacks for waiting messages
-  final Map<String, ValueChanged<DiscordMessageNonce>> _waitMessageCallbacks =
-      {};
+  final _waitMessageCallbacks = <String, ValueChanged<DiscordMessageNonce>>{};
 
   /// Wait for an [MidjourneyMessage$Image] with a given [nonce]. Returns a stream of [MidjourneyMessage$Image].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
@@ -177,8 +176,10 @@ final class DiscordConnectionImpl implements DiscordConnection {
           return;
         }
       }
-      _waitMessages[msg.id] =
-          (nonce: msg.nonce!, prompt: _content2Prompt(msg.content));
+      _waitMessages[msg.id] = (
+        nonce: msg.nonce!,
+        prompt: _content2Prompt(msg.content),
+      );
 
       // Trigger an image generation started event
       await callback(
@@ -314,20 +315,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
       MLogger.d('Created message: ${msg.id}');
       return msg.nonce;
     }
-    return _getNonceForCreatedMessageWithoutNonce(msg);
-  }
 
-  /// Get nonce for updated message
-  String? _getNonceForUpdatedMessage(DiscordMessage$Message msg) {
-    final nonce = _waitMessages[msg.id]?.nonce;
-    if (nonce != null) {
-      MLogger.d('Updated message: ${msg.id} with nonce $nonce');
-    }
-    return nonce;
-  }
-
-  /// Get nonce for created message without nonce
-  String? _getNonceForCreatedMessageWithoutNonce(DiscordMessage$Message msg) {
+    // Get nonce for created message without nonce
     final msgWithSamePrompt = _getWaitMessageByContent(msg.content);
     final waitMessage = msgWithSamePrompt.waitMessage;
 
@@ -337,6 +326,15 @@ final class DiscordConnectionImpl implements DiscordConnection {
       return nonce;
     }
     return null;
+  }
+
+  /// Get nonce for updated message
+  String? _getNonceForUpdatedMessage(DiscordMessage$Message msg) {
+    final nonce = _waitMessages[msg.id]?.nonce;
+    if (nonce != null) {
+      MLogger.d('Updated message: ${msg.id} with nonce $nonce');
+    }
+    return nonce;
   }
 
   /// Convert message content to prompt

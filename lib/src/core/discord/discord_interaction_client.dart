@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
+import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
 import 'package:midjourney_client/src/core/discord/model/interaction.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
@@ -63,7 +64,10 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     );
 
     if (response.statusCode != 204) {
-      throw Exception('Failed to send interaction: ${response.body}');
+      throw DiscordInteractionException(
+        code: response.statusCode,
+        message: response.body,
+      );
     }
 
     MLogger.d('Interaction success');
@@ -161,7 +165,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       guildId: _config.guildId,
       nonce: nonce.toString(),
       data: InteractionData$MessageComponent(
-        customId: 'MJ::JOB::upscale::$index::$hash',
+        customId: 'MJ::JOB::upsample::$index::$hash',
         componentType: MessageComponentType.button,
       ),
     );
