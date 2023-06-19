@@ -338,7 +338,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     if (waitMessage.prompt.isEmpty) {
       // handle overloaded case when first created was without content
-      _waitMessages[msg.id] = (prompt: _content2Prompt(msg.content), nonce: nonce);
+      _waitMessages[msg.id] =
+          (prompt: _content2Prompt(msg.content), nonce: nonce);
     }
 
     return nonce;

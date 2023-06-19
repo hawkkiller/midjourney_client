@@ -59,7 +59,7 @@ class Midjourney {
       _api.variation(imageMessage, index).asBroadcastStream();
 
   /// Upscale the given [imageMessage].
-  /// 
+  ///
   /// Returns streamed messages of progress.
   Stream<MidjourneyMessage$Image> upscale(
     MidjourneyMessage$Image imageMessage,
