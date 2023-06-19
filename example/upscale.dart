@@ -11,12 +11,12 @@ Future<void> main(List<Object> arguments) async {
     serverId: Env.serverId,
     channelId: Env.channelId,
     token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.debug,
+    loggerLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
   await client.init();
 
-  final imagine = client.imagine('Cat in a hat')..listen(print);
+  final imagine = client.imagine('Cat with a sword')..listen(print);
 
   final result = await imagine.last;
 

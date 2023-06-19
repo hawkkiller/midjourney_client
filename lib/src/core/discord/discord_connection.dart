@@ -292,18 +292,19 @@ final class DiscordConnectionImpl implements DiscordConnection {
   DiscordMessageNonce _associateDiscordMessageWithNonce(
     DiscordMessage$Message msg,
   ) {
-    final nonce = _getNonceFromMessage(msg);
+    final nonce = _getNonceForMessage(msg);
     return (nonce: nonce, message: msg);
   }
 
   /// Handle received Discord event
   void _handleDiscordMessage(DiscordMessageNonce event) {
+    MLogger.v('Discord message received: $event');
     final callback = _waitMessageCallbacks[event.nonce];
     callback?.call(event);
   }
 
   /// Retrieve nonce associated with a message
-  String? _getNonceFromMessage(DiscordMessage$Message msg) {
+  String? _getNonceForMessage(DiscordMessage$Message msg) {
     if (msg.created) return _getNonceForCreatedMessage(msg);
     if (msg.updated) return _getNonceForUpdatedMessage(msg);
     return null;
@@ -322,7 +323,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     if (waitMessage != null) {
       final nonce = waitMessage.nonce;
-      MLogger.d('Associated ${msg.id} with nonce $nonce');
+      MLogger.v('Associated ${msg.id} with nonce $nonce');
       return nonce;
     }
     return null;
@@ -330,10 +331,16 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   /// Get nonce for updated message
   String? _getNonceForUpdatedMessage(DiscordMessage$Message msg) {
-    final nonce = _waitMessages[msg.id]?.nonce;
-    if (nonce != null) {
-      MLogger.d('Updated message: ${msg.id} with nonce $nonce');
+    final waitMessage = _waitMessages[msg.id];
+    if (waitMessage == null) return null;
+    final nonce = waitMessage.nonce;
+    MLogger.v('Updated message: ${msg.id} with nonce $nonce');
+
+    if (waitMessage.prompt.isEmpty) {
+      // handle overloaded case when first created was without content
+      _waitMessages[msg.id] = (prompt: _content2Prompt(msg.content), nonce: nonce);
     }
+
     return nonce;
   }
 
@@ -360,6 +367,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     MapEntry<String, WaitMessage>? entry;
 
     for (final e in _waitMessages.entries) {
+      MLogger.v('Comparing $prompt with ${e.value.prompt}');
       if (e.value.prompt == prompt) {
         entry = e;
         break;
