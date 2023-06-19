@@ -2,6 +2,11 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.0-dev.0 (2023-06-19)
+
+- Implemented `imagine` command.
+- Fixed bug when overloaded with concurrent jobs.
+
 ## 0.2.0-dev.3 (2023-06-18)
 
 - Removed useless dependencies
