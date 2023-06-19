@@ -57,4 +57,10 @@ class Midjourney {
     int index,
   ) =>
       _api.variation(imageMessage, index).asBroadcastStream();
+
+  Stream<MidjourneyMessage$Image> upscale(
+    MidjourneyMessage$Image imageMessage,
+    int index,
+  ) =>
+      _api.upscale(imageMessage, index).asBroadcastStream();
 }
