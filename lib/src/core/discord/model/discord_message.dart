@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:midjourney_client/src/core/utils/logger.dart';
 
 @immutable
 sealed class DiscordMessage {
@@ -274,7 +273,6 @@ class DiscordMessageDecoder extends Converter<String, DiscordMessage> {
           't': final String t,
           'd': final Map<String, Object?> d,
         }) {
-      MLogger.v('Parsing event: $json');
       return switch (t) {
         'MESSAGE_CREATE' => DiscordMessage$MessageCreate.fromJson(d),
         'MESSAGE_UPDATE' => DiscordMessage$MessageUpdate.fromJson(d),

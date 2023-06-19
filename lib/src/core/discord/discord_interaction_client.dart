@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
+import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
 import 'package:midjourney_client/src/core/discord/model/interaction.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
@@ -21,6 +22,9 @@ abstract interface class DiscordInteractionClient {
 
   /// Create a new variation based on the picture
   int variation(MidjourneyMessage$Image imageMessage, int index);
+
+  /// Upscale the given [imageMessage] to better quality.
+  int upscale(MidjourneyMessage$Image imageMessage, int index);
 }
 
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
@@ -60,7 +64,10 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     );
 
     if (response.statusCode != 204) {
-      throw Exception('Failed to send interaction: ${response.body}');
+      throw DiscordInteractionException(
+        code: response.statusCode,
+        message: response.body,
+      );
     }
 
     MLogger.d('Interaction success');
@@ -138,6 +145,32 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     );
 
     final body = variationPayload.toJson();
+
+    _rateLimitedInteractions(body);
+
+    return nonce;
+  }
+
+  @override
+  int upscale(MidjourneyMessage$Image imageMessage, int index) {
+    final nonce = _snowflaker.nextId();
+    final hash = uriToHash(imageMessage.uri!);
+    final upscalePayload = Interaction(
+      messageFlags: 0,
+      messageId: imageMessage.id,
+      type: InteractionType.messageComponent,
+      applicationId: '936929561302675456',
+      sessionId: _config.token,
+      channelId: _config.channelId,
+      guildId: _config.guildId,
+      nonce: nonce.toString(),
+      data: InteractionData$MessageComponent(
+        customId: 'MJ::JOB::upsample::$index::$hash',
+        componentType: MessageComponentType.button,
+      ),
+    );
+
+    final body = upscalePayload.toJson();
 
     _rateLimitedInteractions(body);
 

@@ -22,6 +22,14 @@ abstract interface class MidjourneyApi {
     MidjourneyMessage$Image imageMessage,
     int index,
   );
+
+  /// Upscale the given [imageMessage] to better quality.
+  ///
+  /// Returns streamed messages of progress.
+  Stream<MidjourneyMessage$Image> upscale(
+    MidjourneyMessage$Image imageMessage,
+    int index,
+  );
 }
 
 final class MidjourneyApiDiscordImpl extends MidjourneyApi {
@@ -48,7 +56,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
     MidjourneyMessage$Image imageMessage,
     int index,
   ) async* {
-    if (index < 0 && index > 4) {
+    if (index < 1 && index > 4) {
       throw ArgumentError.value(
         index,
         'index',
@@ -56,6 +64,22 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
       );
     }
     final nonce = interactionClient.variation(imageMessage, index);
+    yield* connection.waitImageMessage(nonce);
+  }
+
+  @override
+  Stream<MidjourneyMessage$Image> upscale(
+    MidjourneyMessage$Image imageMessage,
+    int index,
+  ) async* {
+    if (index < 1 && index > 4) {
+      throw ArgumentError.value(
+        index,
+        'index',
+        'Index must be between 0 and 5',
+      );
+    }
+    final nonce = interactionClient.upscale(imageMessage, index);
     yield* connection.waitImageMessage(nonce);
   }
 
