@@ -1,10 +1,8 @@
 # Midjourney Client
 
-Unofficial midjourney client that gives possibility to communicate with official discord bot via provided account. Written in pure **Dart**.  
+Unofficial midjourney client that communicates with the real Midjourney Bot via Discord account token. It's not recommended to use this client in production, because it's not stable yet.
 
-## WIP
-
-Currently, library is WIP. It's not recommended to bound with it yet, the API is not stable and can be changed at any time.
+__Note__: This client is not affiliated with Midjourney Bot.
 
 ## Examples
 
