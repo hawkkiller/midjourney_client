@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 
@@ -25,4 +26,5 @@ Future<void> main(List<Object> arguments) async {
   final uResult = await upscaled.last;
 
   print('Result: $uResult');
+  exit(0);
 }

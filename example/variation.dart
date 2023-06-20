@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 
@@ -20,7 +21,10 @@ Future<void> main(List<Object> arguments) async {
 
   final result = await imagine.last;
 
-  client.variation(result, 1).listen(print);
-  client.variation(result, 2).listen(print);
-  client.variation(result, 3).listen(print);
+  final variation = client.variation(result, 1)..listen(print);
+
+  final vResult = await variation.last;
+
+  print(vResult);
+  exit(0);
 }
