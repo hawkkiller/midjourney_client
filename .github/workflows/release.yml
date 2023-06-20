@@ -29,8 +29,9 @@ jobs:
             test/*
           tag_name: ${{ github.ref }}
           body: ${{steps.build_changelog.outputs.changelog}}
-          draft: false
-          prerelease: false
+          # decide whether to publish as prerelease or not
+          # check the ref to see if it's a prerelease or not
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.ref, 'dev') }}
 
 
   pub-publish:
