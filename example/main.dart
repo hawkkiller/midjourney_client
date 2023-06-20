@@ -20,7 +20,7 @@ Future<void> main(List<Object> arguments) async {
 
   final result = await imagine.last;
 
-  final upscaled = client.upscale(result, 0)..listen(print);
+  final upscaled = client.upscale(result, 1)..listen(print);
   final uResult = await upscaled.last;
 
   print(uResult);
