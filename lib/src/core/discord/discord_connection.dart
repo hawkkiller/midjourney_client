@@ -59,8 +59,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// adds the error to the stream and then closes it.
   @override
   Stream<MidjourneyMessage$Image> waitImageMessage(int nonce) async* {
-    final controller =
-        StreamController<MidjourneyMessage$Image>.broadcast(sync: true);
+    final controller = StreamController<MidjourneyMessage$Image>.broadcast(
+      sync: true,
+    );
 
     _registerImageMessageCallback(
       nonce.toString(),
@@ -118,7 +119,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     if (msg.updated &&
         msg.nonce == null &&
         (msg.attachments?.isNotEmpty ?? false)) {
-      await _handleUpdatedImageMessage(msg, callback);
+      await _handleUpdatedImageMessage(msg, callback, nonce);
     }
   }
 
@@ -185,17 +186,19 @@ final class DiscordConnectionImpl implements DiscordConnection {
       await callback(
         MidjourneyMessage$ImageProgress(
           progress: 0,
-          id: msg.id,
+          id: msg.nonce!,
+          messageId: msg.id,
           content: msg.content,
         ),
         null,
       );
     } else {
       // Trigger an image generation finished event
-      _waitMessageCallbacks.remove(msg.nonce);
+      _waitMessageCallbacks.remove(nonce);
       await callback(
         MidjourneyMessage$ImageFinish(
-          id: msg.id,
+          id: nonce,
+          messageId: msg.id,
           content: msg.content,
           uri: msg.attachments!.first.url,
         ),
@@ -210,6 +213,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _handleUpdatedImageMessage(
     DiscordMessage$Message msg,
     ImageMessageCallback callback,
+    String nonce,
   ) async {
     final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content);
     final progress =
@@ -218,8 +222,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
     // Trigger an image progress event
     await callback(
       MidjourneyMessage$ImageProgress(
+        id: nonce,
         progress: progress ?? 0,
-        id: msg.id,
+        messageId: msg.id,
         content: msg.content,
         uri: msg.attachments!.first.url,
       ),

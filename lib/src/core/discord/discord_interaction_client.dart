@@ -131,7 +131,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     final hash = uriToHash(imageMessage.uri!);
     final variationPayload = Interaction(
       messageFlags: 0,
-      messageId: imageMessage.id,
+      messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
       applicationId: '936929561302675456',
       sessionId: _config.token,
@@ -157,7 +157,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     final hash = uriToHash(imageMessage.uri!);
     final upscalePayload = Interaction(
       messageFlags: 0,
-      messageId: imageMessage.id,
+      messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
       applicationId: '936929561302675456',
       sessionId: _config.token,

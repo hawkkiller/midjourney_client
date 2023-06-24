@@ -4,16 +4,29 @@ abstract class MidjourneyMessage {
 
 sealed class MidjourneyMessage$Image extends MidjourneyMessage {
   const MidjourneyMessage$Image({
-    required this.id,
+    required this.messageId,
     required this.content,
+    required this.id,
     this.uri,
   });
 
-  final String id;
+  /// The id of the message
+  /// This is the id that will be used to update the message
+  /// when the image is finished. It is from Midjourney.
+  final String messageId;
 
+  /// The content of the message
+  /// This is the prompt that will be shown to the user.
+  /// It is from Midjourney.
   final String content;
 
+  /// The uri of the image
+  /// Only present when the image is finished or in progress.
   final String? uri;
+
+  /// The unique identifier for this message
+  /// Generated when first message created.
+  final String id;
 
   int get progress => switch (this) {
         final MidjourneyMessage$ImageProgress v => v.progress,
@@ -29,8 +42,9 @@ sealed class MidjourneyMessage$Image extends MidjourneyMessage {
 class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
   const MidjourneyMessage$ImageProgress({
     required this.progress,
-    required super.id,
+    required super.messageId,
     required super.content,
+    required super.id,
     super.uri,
   });
 
@@ -44,9 +58,10 @@ class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
             [
               r'MidjourneyMessage$Progress(',
               'progress: $progress, ',
-              'id: $id, ',
+              'messageId: $messageId, ',
               'content: $content, ',
-              'uri: $uri',
+              'uri: $uri, ',
+              'id: $id',
               ')',
             ],
           ),
@@ -55,9 +70,10 @@ class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
 
 class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
   const MidjourneyMessage$ImageFinish({
-    required super.id,
+    required super.messageId,
     required super.content,
-    required String super.uri,
+    required super.uri,
+    required super.id,
   });
 
   @override
@@ -66,9 +82,10 @@ class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
           ..writeAll(
             [
               r'MidjourneyMessage$Finish(',
-              'id: $id, ',
+              'id: $messageId, ',
               'content: $content, ',
               'uri: $uri',
+              'id: $id, ',
               ')',
             ],
           ),
