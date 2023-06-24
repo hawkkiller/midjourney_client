@@ -2,6 +2,11 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.1-dev.0 (2023-06-24)
+
+- Added unique identifiers to `MidjourneyMessage`
+- Renamed `id` to `messageId`
+
 ## 0.3.0-dev.1 (2023-06-20)
 
 - Created README
