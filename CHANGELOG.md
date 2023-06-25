@@ -2,6 +2,12 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.2-dev.0 (2023-06-25)
+
+- Redesigned RateLimiter
+- Created tests for RateLimiter
+- Created general structure for tests
+
 ## 0.3.1-dev.0 (2023-06-24)
 
 - Added unique identifiers to `MidjourneyMessage`
