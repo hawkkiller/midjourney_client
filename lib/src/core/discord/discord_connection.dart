@@ -152,7 +152,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
         if (embed.color == 16711680) {
           await _imageMessageError(
             callback: callback,
-            error: embed.description,
+            error: embed.description!,
             nonce: nonce,
           );
           return;
@@ -162,16 +162,16 @@ final class DiscordConnectionImpl implements DiscordConnection {
           MLogger.i('Discord warning: ${embed.description}');
         }
 
-        if (embed.title.contains('continue') &&
-            embed.description.contains("verify you're human")) {
+        if ((embed.title?.contains('continue') ?? false) &&
+            (embed.description?.contains("verify you're human") ?? false)) {
           // TODO(MichaelLazebny): handle captcha
           return;
         }
 
-        if (embed.title.contains('Invalid')) {
+        if (embed.title?.contains('Invalid') ?? false) {
           await _imageMessageError(
             callback: callback,
-            error: embed.description,
+            error: embed.description!,
             nonce: nonce,
           );
           return;

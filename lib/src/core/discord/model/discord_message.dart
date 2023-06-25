@@ -17,17 +17,10 @@ final class DiscordMessage$Unsupported extends DiscordMessage {
   final Map<String, Object?> data;
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              '$type(',
-              'type: $type, ',
-              'data: $data',
-              ')',
-            ],
-          ),
-      ).toString();
+  String toString() => '$type('
+      'type: $type, '
+      'data: $data'
+      ')';
 }
 
 sealed class DiscordMessage$Message extends DiscordMessage {
@@ -50,21 +43,14 @@ sealed class DiscordMessage$Message extends DiscordMessage {
   final String channelId;
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              '$runtimeType(',
-              'id: $id, ',
-              'content: $content, ',
-              'embeds: $embeds, ',
-              'auhor: $author, ',
-              'nonce: $nonce, ',
-              'attachments: $attachments',
-              ')',
-            ],
-          ),
-      ).toString();
+  String toString() => '$runtimeType('
+      'id: $id, '
+      'content: $content, '
+      'embeds: $embeds, '
+      'auhor: $author, '
+      'nonce: $nonce, '
+      'attachments: $attachments'
+      ')';
 
   bool get created => switch (this) {
         DiscordMessage$MessageCreate() => true,
@@ -132,36 +118,29 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
 }
 
 @immutable
-final class Embed {
+class Embed {
   const Embed({
-    required this.title,
-    required this.description,
-    required this.color,
+    this.title,
+    this.description,
+    this.color,
   });
 
-  factory Embed.fromJson(Map<String, Object?> json) => Embed(
-        title: json['title']! as String,
-        description: json['description']! as String,
-        color: json['color']! as int,
+  factory Embed.fromJson(Map<String, dynamic> json) => Embed(
+        title: json['title'] as String?,
+        description: json['description'] as String?,
+        color: json['color'] as int?,
       );
 
-  final String title;
-  final String description;
-  final int color;
+  final String? title;
+  final String? description;
+  final int? color;
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              'Embed(',
-              'title: $title, ',
-              'description: $description, ',
-              'color: $color',
-              ')',
-            ],
-          ),
-      ).toString();
+  String toString() => 'Embed('
+      'title: $title, '
+      'description: $description, '
+      'color: $color'
+      ')';
 }
 
 @immutable
@@ -195,22 +174,15 @@ final class Attachment {
   final String id;
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              'Attachment(',
-              'width: $width, ',
-              'height: $height, ',
-              'url: $url, ',
-              'proxyUrl: $proxyUrl, ',
-              'size: $size, ',
-              'filename: $filename, ',
-              'id: $id',
-              ')',
-            ],
-          ),
-      ).toString();
+  String toString() => 'Attachment('
+      'width: $width, '
+      'height: $height, '
+      'url: $url, '
+      'proxyUrl: $proxyUrl, '
+      'size: $size, '
+      'filename: $filename, '
+      'id: $id'
+      ')';
 }
 
 @immutable
@@ -238,19 +210,12 @@ final class Author {
   final String? avatar;
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..writeAll(
-            [
-              'Author(',
-              'username: $username, ',
-              'discriminator: $discriminator, ',
-              'id: $id, ',
-              'avatar: $avatar',
-              ')',
-            ],
-          ),
-      ).toString();
+  String toString() => 'Author('
+      'username: $username, '
+      'discriminator: $discriminator, '
+      'id: $id, '
+      'avatar: $avatar'
+      ')';
 }
 
 const $discordMessageDecoder = DiscordMessageDecoder();
