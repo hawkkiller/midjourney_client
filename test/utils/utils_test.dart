@@ -98,6 +98,24 @@ void main() {
 
         expect(counter, 10);
       });
+
+      test('Should work correctly with delays', () async {
+        var counter = 0;
+        await rateLimiter.call(() => counter++);
+
+        expect(counter, 1);
+
+        rateLimiter(() => counter++).ignore();
+        rateLimiter(() => counter++).ignore();
+
+        await Future<void>.delayed(period);
+
+        expect(counter, 2);
+
+        await Future<void>.delayed(period);
+        
+        expect(counter, 3);
+      });
     });
   });
 }
