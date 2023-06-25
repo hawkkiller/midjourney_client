@@ -240,7 +240,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// This method is called once the client is initialized.
   Future<void> _establishWebSocketConnection() async {
-    await _webSocketClient.connect(Uri.parse(config.wsUrl));
+    await _webSocketClient.connect(config.wsUrl);
     _webSocketClient.stream
         .whereType<String>()
         .map($discordMessageDecoder.convert)

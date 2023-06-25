@@ -29,7 +29,7 @@ abstract interface class WebsocketClient {
   FutureOr<void> add(Object event);
 
   /// Connect to the websocket.
-  Future<void> connect(Uri uri);
+  Future<void> connect(String url);
 
   /// Close the websocket.
   void disconnect([
@@ -50,7 +50,7 @@ final class WebsocketClient$Ws implements WebsocketClient {
   FutureOr<void> add(Object event) => _ws.add(event);
 
   @override
-  Future<void> connect(Uri uri) => _ws.connect(uri.toString());
+  Future<void> connect(String url) => _ws.connect(url);
 
   @override
   void disconnect([
