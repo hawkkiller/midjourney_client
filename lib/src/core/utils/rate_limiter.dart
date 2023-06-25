@@ -1,26 +1,33 @@
 import 'dart:async';
 
-class RateLimiter<T> {
-  RateLimiter(this._duration);
+class RateLimiter {
+  RateLimiter({required this.limit, required this.period});
 
-  final Duration _duration;
+  final int limit;
+  final Duration period;
+  final List<int> _timestamps = [];
 
-  bool _isFirst = true;
+  FutureOr<void> call(void Function() fn) async {
+    var now = DateTime.now().millisecondsSinceEpoch;
 
-  late final stream = _controller.stream.asyncMap<T>(
-    (event) {
-      if (_isFirst) {
-        _isFirst = false;
-        return event;
+    // If the number of timestamps in the list is equal to or greater than the limit
+    if (_timestamps.length >= limit) {
+      // Enter a loop to process existing timestamps
+      while (_timestamps.isNotEmpty) {
+        final elapsed = now - _timestamps[0];
+
+        if (elapsed >= period.inMilliseconds) {
+          // Remove the earliest timestamp from the list as it's no longer relevant
+          _timestamps.removeAt(0);
+        } else {
+          // Otherwise, delay the next function call until the period has passed
+          await Future<void>.delayed(period - Duration(milliseconds: elapsed));
+          now = DateTime.now().millisecondsSinceEpoch;
+        }
       }
+    }
 
-      return Future.delayed(_duration, () => event);
-    },
-  );
-
-  late final _controller = StreamController<T>.broadcast();
-
-  void add(T value) => _controller.add(value);
-
-  Future<void> close() => _controller.close();
+    _timestamps.add(now);
+    fn();
+  }
 }

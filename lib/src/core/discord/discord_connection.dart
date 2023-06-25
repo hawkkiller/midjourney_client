@@ -42,7 +42,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   final MidjourneyConfig config;
 
   /// Connection state timer
-  Timer? _connectionStateTimer;
+  Timer? _heartbeatTimer;
 
   /// Client for WebSocket communication
   final WebSocketClient _webSocketClient = WebSocketClient();
@@ -277,8 +277,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// This method is called once the connection is established.
   void _initiatePeriodicHeartbeat() {
-    _connectionStateTimer?.cancel();
-    _connectionStateTimer = Timer.periodic(
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(
       const Duration(seconds: 40),
       (timer) => _sendHeartbeat(timer.tick),
     );
@@ -389,7 +389,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   void close() {
     _webSocketClient.close();
-    _connectionStateTimer?.cancel();
+    _heartbeatTimer?.cancel();
   }
 
   @override
