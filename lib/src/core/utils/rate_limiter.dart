@@ -9,7 +9,7 @@ class RateLimiter {
 
   FutureOr<void> call(void Function() fn) async {
     var now = DateTime.now().millisecondsSinceEpoch;
-    
+
     // If the number of timestamps in the list is equal to or greater than the limit
     if (_timestamps.length >= limit) {
       // Enter a loop to process existing timestamps

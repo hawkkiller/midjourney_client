@@ -113,7 +113,7 @@ void main() {
         expect(counter, 2);
 
         await Future<void>.delayed(period);
-        
+
         expect(counter, 3);
       });
     });
