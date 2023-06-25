@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:meta/meta.dart';
 import 'package:midjourney_client/midjourney_client.dart';
 import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
 import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
 import 'package:midjourney_client/src/core/discord/model/discord_message.dart';
 import 'package:midjourney_client/src/core/discord/model/discord_ws.dart';
+import 'package:midjourney_client/src/core/discord/websocket_client.dart';
 import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
 import 'package:midjourney_client/src/core/utils/logger.dart';
 import 'package:midjourney_client/src/core/utils/stream_transformers.dart';
-import 'package:ws/ws.dart';
 
 typedef ValueChanged<T> = void Function(T value);
 
@@ -35,7 +36,10 @@ abstract interface class DiscordConnection {
 }
 
 final class DiscordConnectionImpl implements DiscordConnection {
-  DiscordConnectionImpl({required this.config}) {
+  DiscordConnectionImpl({
+    required this.config,
+    @visibleForTesting WebsocketClient? websocketClient,
+  }) : _webSocketClient = websocketClient ?? WebsocketClient$Ws() {
     _handleWebSocketStateChanges();
   }
 
@@ -45,7 +49,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Timer? _heartbeatTimer;
 
   /// Client for WebSocket communication
-  final WebSocketClient _webSocketClient = WebSocketClient();
+  final WebsocketClient _webSocketClient;
 
   /// Message waiting pool
   final Map<String, WaitMessage> _waitMessages = {};
@@ -257,7 +261,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   void _handleWebSocketStateChanges() {
     _webSocketClient.stateChanges.listen((event) async {
       MLogger.d('WebSocket state change: $event');
-      if (event.readyState == WebSocketReadyState.open) {
+      if (event == WebsocketState.open) {
         await _authenticate();
         _initiatePeriodicHeartbeat();
       }
@@ -388,7 +392,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   void close() {
-    _webSocketClient.close();
+    _webSocketClient.disconnect();
     _heartbeatTimer?.cancel();
   }
 
