@@ -32,21 +32,20 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     required MidjourneyConfig config,
     @visibleForTesting http.Client? client,
   })  : _config = config,
-        _client = client ?? http.Client() {
-    rateLimiter.stream.listen(_interactions);
-  }
+        _client = client ?? http.Client();
 
   final http.Client _client;
   final MidjourneyConfig _config;
   final _snowflaker = Snowflaker(workerId: 1, datacenterId: 1);
-  final rateLimiter = RateLimiter<Map<String, Object?>>(
-    const Duration(seconds: 2),
+  final _rateLimiter = RateLimiter(
+    limit: 1,
+    period: const Duration(seconds: 2),
   );
 
   void _rateLimitedInteractions(
     Map<String, Object?> body,
   ) =>
-      rateLimiter.add(body);
+      _rateLimiter(() => _interactions(body));
 
   /// Execute a Discord interaction.
   Future<void> _interactions(Map<String, Object?> body) async {
