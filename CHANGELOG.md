@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.2-dev.3 (2023-06-26)
+
+- Fixed failures with rate limiter and interactions
+
 ## 0.3.2-dev.2 (2023-06-25)
 
 - Created interface for websocket
