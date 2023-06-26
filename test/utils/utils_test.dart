@@ -21,7 +21,7 @@ void main() {
         var counter = 0;
 
         for (var i = 0; i < 2; i++) {
-          rateLimiter(() => counter++);
+          rateLimiter(() => counter++).ignore();
         }
 
         expect(counter, 1);
@@ -31,18 +31,20 @@ void main() {
         expect(counter, 2);
       });
 
-      test('Should not lose stackTrace', () {
+      test('Should not lose stackTrace', () async {
         var counter = 0;
 
+        await rateLimiter(() => counter++);
+
+        expect(counter, 1);
+
         expect(
-          () => rateLimiter(() {
+          () async => rateLimiter(() {
             counter++;
             throw Exception('Test');
           }),
           throwsA(isA<Exception>()),
         );
-
-        expect(counter, 1);
       });
 
       test('Should not break if error occur', () async {
@@ -58,7 +60,7 @@ void main() {
 
         expect(counter, 1);
 
-        rateLimiter(() => counter++);
+        rateLimiter(() => counter++).ignore();
 
         await Future<void>.delayed(period);
 
@@ -75,7 +77,7 @@ void main() {
         var counter = 0;
 
         for (var i = 0; i < 3; i++) {
-          rateLimiter(() => counter++);
+          rateLimiter(() => counter++).ignore();
         }
 
         expect(counter, 2);
@@ -93,7 +95,7 @@ void main() {
         );
 
         for (var i = 0; i < 10; i++) {
-          rateLimiter(() => counter++);
+          rateLimiter(() => counter++).ignore();
         }
 
         expect(counter, 10);
@@ -101,14 +103,14 @@ void main() {
 
       test('Should work correctly with delays', () async {
         var counter = 0;
-        rateLimiter.call(() => counter++);
+        rateLimiter.call(() => counter++).ignore();
 
         expect(counter, 1);
 
         await Future<void>.delayed(period);
 
         await rateLimiter(() => counter++);
-        rateLimiter(() => counter++);
+        rateLimiter(() => counter++).ignore();
 
         expect(counter, 2);
 

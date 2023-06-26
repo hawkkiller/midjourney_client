@@ -18,13 +18,13 @@ typedef ImageMessageCallback = FutureOr<void> Function(
 
 abstract interface class DiscordInteractionClient {
   /// Imagine a new picture with the given [prompt].
-  int imagine(String prompt);
+  Future<int> imagine(String prompt);
 
   /// Create a new variation based on the picture
-  int variation(MidjourneyMessage$Image imageMessage, int index);
+  Future<int> variation(MidjourneyMessage$Image imageMessage, int index);
 
   /// Upscale the given [imageMessage] to better quality.
-  int upscale(MidjourneyMessage$Image imageMessage, int index);
+  Future<int> upscale(MidjourneyMessage$Image imageMessage, int index);
 }
 
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
@@ -42,7 +42,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     period: const Duration(seconds: 2),
   );
 
-  void _rateLimitedInteractions(
+  Future<void> _rateLimitedInteractions(
     Map<String, Object?> body,
   ) =>
       _rateLimiter(() => _interactions(body));
@@ -75,7 +75,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  int imagine(String prompt) {
+  Future<int> imagine(String prompt) async {
     final nonce = _snowflaker.nextId();
     final imaginePayload = Interaction(
       type: InteractionType.applicationCommand,
@@ -119,13 +119,13 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
 
     final body = imaginePayload.toJson();
 
-    _rateLimitedInteractions(body);
+    await _rateLimitedInteractions(body);
 
     return nonce;
   }
 
   @override
-  int variation(MidjourneyMessage$Image imageMessage, int index) {
+  Future<int> variation(MidjourneyMessage$Image imageMessage, int index) async {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
     final variationPayload = Interaction(
@@ -145,13 +145,13 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
 
     final body = variationPayload.toJson();
 
-    _rateLimitedInteractions(body);
+    await _rateLimitedInteractions(body);
 
     return nonce;
   }
 
   @override
-  int upscale(MidjourneyMessage$Image imageMessage, int index) {
+  Future<int> upscale(MidjourneyMessage$Image imageMessage, int index) async {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
     final upscalePayload = Interaction(
@@ -171,7 +171,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
 
     final body = upscalePayload.toJson();
 
-    _rateLimitedInteractions(body);
+    await _rateLimitedInteractions(body);
 
     return nonce;
   }

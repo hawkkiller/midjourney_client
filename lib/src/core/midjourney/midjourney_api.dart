@@ -47,7 +47,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
     // is the only thing that is lasted between requests.
     prompt =
         '$prompt --seed ${DateTime.now().microsecondsSinceEpoch % 1000000}';
-    final nonce = interactionClient.imagine(prompt);
+    final nonce = await interactionClient.imagine(prompt);
     yield* connection.waitImageMessage(nonce);
   }
 
@@ -63,7 +63,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
         'Index must be between 0 and 5',
       );
     }
-    final nonce = interactionClient.variation(imageMessage, index);
+    final nonce = await interactionClient.variation(imageMessage, index);
     yield* connection.waitImageMessage(nonce);
   }
 
@@ -79,7 +79,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
         'Index must be between 0 and 5',
       );
     }
-    final nonce = interactionClient.upscale(imageMessage, index);
+    final nonce = await interactionClient.upscale(imageMessage, index);
     yield* connection.waitImageMessage(nonce);
   }
 
