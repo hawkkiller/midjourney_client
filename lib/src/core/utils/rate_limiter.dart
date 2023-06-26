@@ -7,7 +7,7 @@ class RateLimiter {
   final Duration period;
   final List<int> _timestamps = [];
 
-  Future<void> call(void Function() fn) async {
+  Future<void> call(FutureOr<void> Function() fn) async {
     var now = DateTime.now().millisecondsSinceEpoch;
 
     // If the number of timestamps in the list is equal to or greater than the limit
@@ -27,6 +27,6 @@ class RateLimiter {
       }
     }
     _timestamps.add(now);
-    fn();
+    await fn();
   }
 }

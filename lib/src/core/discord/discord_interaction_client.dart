@@ -30,13 +30,15 @@ abstract interface class DiscordInteractionClient {
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   DiscordInteractionClientImpl({
     required MidjourneyConfig config,
+    @visibleForTesting Snowflaker? snowflaker,
     @visibleForTesting http.Client? client,
-  })  : _config = config,
+  })  : _snowflaker = snowflaker ?? Snowflaker(workerId: 1, datacenterId: 1),
+        _config = config,
         _client = client ?? http.Client();
 
   final http.Client _client;
   final MidjourneyConfig _config;
-  final _snowflaker = Snowflaker(workerId: 1, datacenterId: 1);
+  final Snowflaker _snowflaker;
   final _rateLimiter = RateLimiter(
     limit: 1,
     period: const Duration(seconds: 2),
@@ -44,8 +46,10 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
 
   Future<void> _rateLimitedInteractions(
     Map<String, Object?> body,
-  ) =>
-      _rateLimiter(() => _interactions(body));
+  ) async =>
+      _rateLimiter(
+        () async => _interactions(body),
+      );
 
   /// Execute a Discord interaction.
   Future<void> _interactions(Map<String, Object?> body) async {
@@ -120,7 +124,6 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     final body = imaginePayload.toJson();
 
     await _rateLimitedInteractions(body);
-
     return nonce;
   }
 
