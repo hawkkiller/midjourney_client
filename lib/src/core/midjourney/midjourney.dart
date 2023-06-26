@@ -44,7 +44,7 @@ class Midjourney {
   late final MidjourneyApi _api;
 
   /// Initialize the client.
-  /// 
+  ///
   /// This is required to be called before any other method.
   Future<void> init() => _api.init();
 

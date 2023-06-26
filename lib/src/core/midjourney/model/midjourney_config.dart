@@ -1,15 +1,15 @@
 import 'package:meta/meta.dart';
 
 /// MidjourneyConfig is a class that holds the configuration for the Midjourney
-/// 
+///
 /// [baseUrl] is the base url for the discord api
-/// 
+///
 /// [wsUrl] is the websocket url for the discord api
-/// 
+///
 /// [token] is the token for the discord api
-/// 
+///
 /// [guildId] is the guild id for the discord api
-/// 
+///
 /// [channelId] is the channel id for the discord api
 class MidjourneyConfig {
   const MidjourneyConfig({
@@ -35,8 +35,8 @@ class MidjourneyConfig {
   /// The channel id for the discord api
   final String channelId;
 
-  /// Creates a copy of this MidjourneyConfig 
-  /// 
+  /// Creates a copy of this MidjourneyConfig
+  ///
   /// but with the given fields replaced with the new values.
   MidjourneyConfig copyWith({
     String? baseUrl,
