@@ -27,7 +27,9 @@ class Midjourney {
         assert(channelId.isNotEmpty, 'channelId must not be empty'),
         assert(token.isNotEmpty, 'token must not be empty') {
     MLogger.level = loggerLevel;
-    final config = MidjourneyConfig.discord.copyWith(
+    final config = MidjourneyConfig(
+      baseUrl: 'https://discord.com',
+      wsUrl: 'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
       channelId: channelId,
       guildId: serverId,
       token: token,
@@ -41,6 +43,9 @@ class Midjourney {
   /// The api to use.
   late final MidjourneyApi _api;
 
+  /// Initialize the client.
+  ///
+  /// This is required to be called before any other method.
   Future<void> init() => _api.init();
 
   /// Imagine a new picture with the given [prompt].

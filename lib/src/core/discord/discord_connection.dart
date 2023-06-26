@@ -247,8 +247,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
         .whereType<DiscordMessage$Message>()
         .where((event) {
           final isChannel = event.channelId == config.channelId;
-          final isMidjourneyBot =
-              event.author.id == MidjourneyConfig.midjourneyBotId;
+          // midjourney bot id in discord
+          final isMidjourneyBot = event.author.id == '936929561302675456';
           return isChannel && isMidjourneyBot;
         })
         .map(_associateDiscordMessageWithNonce)

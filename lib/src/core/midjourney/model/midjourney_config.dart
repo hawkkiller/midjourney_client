@@ -1,5 +1,18 @@
+import 'package:meta/meta.dart';
+
+/// MidjourneyConfig is a class that holds the configuration for the Midjourney
+///
+/// [baseUrl] is the base url for the discord api
+///
+/// [wsUrl] is the websocket url for the discord api
+///
+/// [token] is the token for the discord api
+///
+/// [guildId] is the guild id for the discord api
+///
+/// [channelId] is the channel id for the discord api
 class MidjourneyConfig {
-  MidjourneyConfig({
+  const MidjourneyConfig({
     required this.baseUrl,
     this.token = '',
     this.guildId = '',
@@ -7,19 +20,24 @@ class MidjourneyConfig {
     this.wsUrl = '',
   });
 
+  /// The base url for the discord api
   final String baseUrl;
+
+  /// The websocket url for the discord api
   final String wsUrl;
+
+  /// The token for the discord api
   final String token;
+
+  /// The guild id for the discord api
   final String guildId;
+
+  /// The channel id for the discord api
   final String channelId;
 
-  static final discord = MidjourneyConfig(
-    baseUrl: 'https://discord.com',
-    wsUrl: 'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
-  );
-
-  static const midjourneyBotId = '936929561302675456';
-
+  /// Creates a copy of this MidjourneyConfig
+  ///
+  /// but with the given fields replaced with the new values.
   MidjourneyConfig copyWith({
     String? baseUrl,
     String? wsUrl,
@@ -34,4 +52,13 @@ class MidjourneyConfig {
         guildId: guildId ?? this.guildId,
         channelId: channelId ?? this.channelId,
       );
+
+  @visibleForTesting
+  static const empty = MidjourneyConfig(
+    baseUrl: 'empty',
+    wsUrl: 'empty',
+    token: 'empty',
+    guildId: 'empty',
+    channelId: 'empty',
+  );
 }

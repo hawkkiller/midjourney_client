@@ -1,10 +1,194 @@
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart' as http_testing;
+import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
 import 'package:midjourney_client/src/core/discord/model/interaction.dart';
+import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
+import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
 import 'package:snowflaker/snowflaker.dart';
 import 'package:test/test.dart';
 
+class _SnowflakerMock implements Snowflaker {
+  @override
+  int nextId() => 123;
+
+  @override
+  int get datacenterId => 0;
+
+  @override
+  int get epoch => 0;
+
+  @override
+  int get workerId => 0;
+}
+
 void main() {
   group('Discord >', () {
-    group('Interaction >', () {
+    group('Interaction Client >', () {
+      late http.Client httpClient;
+      late DiscordInteractionClient discordInteractionClient;
+      late Snowflaker snowflaker;
+
+      setUp(() {
+        httpClient = http_testing.MockClient(
+          (request) async => http.Response(
+            '{"id": "123"}',
+            // discord interaction api returns 204 on success
+            204,
+          ),
+        );
+        snowflaker = _SnowflakerMock();
+        discordInteractionClient = DiscordInteractionClientImpl(
+          config: MidjourneyConfig.empty,
+          client: httpClient,
+          snowflaker: snowflaker,
+        );
+      });
+
+      tearDown(() {
+        httpClient.close();
+      });
+
+      test('Imagine should work correctly with 204', () {
+        expect(
+          discordInteractionClient.imagine('prompt'),
+          completion(123),
+        );
+      });
+
+      test('Variation should work correctly with 204', () {
+        final response = discordInteractionClient.variation(
+          const MidjourneyMessage$ImageFinish(
+            id: 'id',
+            content: '',
+            messageId: '',
+            uri: '',
+          ),
+          1,
+        );
+
+        expect(
+          response,
+          completion(123),
+        );
+      });
+
+      test('Upscale should work correctly with 204', () {
+        final response = discordInteractionClient.upscale(
+          const MidjourneyMessage$ImageFinish(
+            id: 'id',
+            content: '',
+            messageId: '',
+            uri: '',
+          ),
+          1,
+        );
+
+        expect(
+          response,
+          completion(123),
+        );
+      });
+
+      test('Imagine should fail with non 204', () {
+        httpClient = http_testing.MockClient(
+          (request) async => http.Response(
+            '{"id": "000"}',
+            // discord interaction api returns 204 on success
+            404,
+          ),
+        );
+        discordInteractionClient = DiscordInteractionClientImpl(
+          config: MidjourneyConfig.empty,
+          client: httpClient,
+          snowflaker: snowflaker,
+        );
+
+        expect(
+          discordInteractionClient.imagine('prompt'),
+          throwsA(
+            isA<DiscordInteractionException>().having(
+              (e) => e.code,
+              'code',
+              404,
+            ),
+          ),
+        );
+      });
+
+      test('Variation should fail with non 204', () {
+        httpClient = http_testing.MockClient(
+          (request) async => http.Response(
+            '{"id": "000"}',
+            // discord interaction api returns 204 on success
+            404,
+          ),
+        );
+        discordInteractionClient = DiscordInteractionClientImpl(
+          config: MidjourneyConfig.empty,
+          client: httpClient,
+          snowflaker: snowflaker,
+        );
+
+        final response = discordInteractionClient.variation(
+          const MidjourneyMessage$ImageFinish(
+            id: 'id',
+            content: '',
+            messageId: '',
+            uri: '',
+          ),
+          1,
+        );
+
+        expect(
+          response,
+          throwsA(
+            isA<DiscordInteractionException>().having(
+              (e) => e.code,
+              'code',
+              404,
+            ),
+          ),
+        );
+      });
+
+      test('Upscale should fail with non 204', () {
+        httpClient = http_testing.MockClient(
+          (request) async => http.Response(
+            '{"id": "000"}',
+            // discord interaction api returns 204 on success
+            404,
+          ),
+        );
+        discordInteractionClient = DiscordInteractionClientImpl(
+          config: MidjourneyConfig.empty,
+          client: httpClient,
+          snowflaker: snowflaker,
+        );
+
+        final response = discordInteractionClient.upscale(
+          const MidjourneyMessage$ImageFinish(
+            id: 'id',
+            content: '',
+            messageId: '',
+            uri: '',
+          ),
+          1,
+        );
+
+        expect(
+          response,
+          throwsA(
+            isA<DiscordInteractionException>().having(
+              (e) => e.code,
+              'code',
+              404,
+            ),
+          ),
+        );
+      });
+    });
+    group('Interaction Model >', () {
       final snowflaker = Snowflaker(
         workerId: 10,
         datacenterId: 15,
