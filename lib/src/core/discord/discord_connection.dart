@@ -147,56 +147,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     ImageMessageCallback callback,
     String nonce,
   ) async {
-    if (msg.nonce != null) {
-      // check if there is an issue with message, i.e. error or warning
-      if (msg.embeds.isNotEmpty) {
-        final embed = msg.embeds.first;
-
-        // Discord error color
-        if (embed.color == 16711680) {
-          await _imageMessageError(
-            callback: callback,
-            error: embed.description!,
-            nonce: nonce,
-          );
-          return;
-        }
-
-        if (embed.color == 16776960) {
-          MLogger.i('Discord warning: ${embed.description}');
-        }
-
-        if ((embed.title?.contains('continue') ?? false) &&
-            (embed.description?.contains("verify you're human") ?? false)) {
-          // TODO(MichaelLazebny): handle captcha
-          return;
-        }
-
-        if (embed.title?.contains('Invalid') ?? false) {
-          await _imageMessageError(
-            callback: callback,
-            error: embed.description!,
-            nonce: nonce,
-          );
-          return;
-        }
-      }
-      _waitMessages[msg.id] = (
-        nonce: msg.nonce!,
-        prompt: _content2Prompt(msg.content),
-      );
-
-      // Trigger an image generation started event
-      await callback(
-        MidjourneyMessage$ImageProgress(
-          progress: 0,
-          id: msg.nonce!,
-          messageId: msg.id,
-          content: msg.content,
-        ),
-        null,
-      );
-    } else {
+    if (msg.nonce == null) {
       // Trigger an image generation finished event
       _waitMessageCallbacks.remove(nonce);
       await callback(
@@ -208,7 +159,63 @@ final class DiscordConnectionImpl implements DiscordConnection {
         ),
         null,
       );
+      return;
     }
+    String? reason;
+    // check if there is an issue with message, i.e. error or warning
+    if (msg.embeds.isNotEmpty) {
+      final embed = msg.embeds.first;
+
+      // Discord error color
+      if (embed.color == 16711680) {
+        await _imageMessageError(
+          callback: callback,
+          error: embed.description!,
+          nonce: nonce,
+        );
+        return;
+      }
+
+      if (embed.color == 16776960) {
+        MLogger.w('Discord warning: ${embed.description}');
+      }
+
+      final title = embed.title;
+      final description = embed.description;
+
+      if (title == null || description == null) {
+        // do nothing
+      } else if (title.contains('continue') &&
+          description.contains("verify you're human")) {
+        // TODO(hawkkiller): handle captcha
+        return;
+      } else if (title.contains('Invalid')) {
+        await _imageMessageError(
+          callback: callback,
+          error: embed.description!,
+          nonce: nonce,
+        );
+        return;
+      } else if (title.contains('Queued')) {
+        reason = '$title\n$description';
+      }
+    }
+    _waitMessages[msg.id] = (
+      nonce: msg.nonce!,
+      prompt: _content2Prompt(msg.content),
+    );
+
+    // Trigger an image generation started event
+    await callback(
+      MidjourneyMessage$ImageProgress(
+        progress: 0,
+        id: msg.nonce!,
+        messageId: msg.id,
+        content: reason ?? msg.content,
+      ),
+      null,
+    );
+    return;
   }
 
   /// Handle updated image message
