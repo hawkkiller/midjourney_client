@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.2-dev.5 (2023-06-27)
+
+- Fixed wrong queued behaviour [#32](https://github.com/hawkkiller/midjourney_client/issues/32)
+
 ## 0.3.2-dev.4 (2023-06-27)
 
 - Added clear description to queued warning [#32](https://github.com/hawkkiller/midjourney_client/issues/32)

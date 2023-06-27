@@ -196,7 +196,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
           nonce: nonce,
         );
         return;
-      } else if (title.contains('Queued')) {
+      } else if (title.contains('Job queued')) {
         reason = '$title\n$description';
       }
     }
