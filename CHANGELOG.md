@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.2-dev.6 (2023-06-28)
+
+- Added Proxy Support
+
 ## 0.3.2-dev.5 (2023-06-27)
 
 - Fixed wrong queued behaviour [#32](https://github.com/hawkkiller/midjourney_client/issues/32)
