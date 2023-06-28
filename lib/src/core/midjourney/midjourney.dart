@@ -22,12 +22,12 @@ class Midjourney {
     required String token,
 
     /// The base url to use.
-    /// 
+    ///
     /// Set this to your proxy url if you are using a proxy.
     String? baseUrl,
 
     /// The websocket url to use.
-    /// 
+    ///
     /// Set this to your proxy url if you are using a proxy.
     String? wsUrl,
 
@@ -39,7 +39,8 @@ class Midjourney {
     MLogger.level = loggerLevel;
     final config = MidjourneyConfig(
       baseUrl: baseUrl ?? 'https://discord.com',
-      wsUrl: wsUrl ?? 'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
+      wsUrl: wsUrl ??
+          'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
       channelId: channelId,
       guildId: serverId,
       token: token,
