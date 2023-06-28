@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.2-dev.7 (2023-06-28)
+
+- Updated ws library
+
 ## 0.3.2-dev.6 (2023-06-28)
 
 - Added Proxy Support

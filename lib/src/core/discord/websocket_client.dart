@@ -5,7 +5,7 @@ import 'package:ws/ws.dart';
 enum WebsocketState {
   connecting,
   open,
-  closing,
+  disconnecting,
   closed;
 }
 
@@ -13,7 +13,7 @@ extension WebsocketStateX on WebSocketReadyState {
   WebsocketState get websocketState => switch (this) {
         WebSocketReadyState.connecting => WebsocketState.connecting,
         WebSocketReadyState.open => WebsocketState.open,
-        WebSocketReadyState.closing => WebsocketState.closing,
+        WebSocketReadyState.disconnecting => WebsocketState.disconnecting,
         WebSocketReadyState.closed => WebsocketState.closed,
       };
 }
