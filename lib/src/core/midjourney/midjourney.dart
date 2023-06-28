@@ -21,6 +21,16 @@ class Midjourney {
     /// The token of the client.
     required String token,
 
+    /// The base url to use.
+    ///
+    /// Set this to your proxy url if you are using a proxy.
+    String? baseUrl,
+
+    /// The websocket url to use.
+    ///
+    /// Set this to your proxy url if you are using a proxy.
+    String? wsUrl,
+
     /// Whether to log debug messages.
     MLoggerLevel loggerLevel = MLoggerLevel.info,
   })  : assert(serverId.isNotEmpty, 'serverId must not be empty'),
@@ -28,8 +38,9 @@ class Midjourney {
         assert(token.isNotEmpty, 'token must not be empty') {
     MLogger.level = loggerLevel;
     final config = MidjourneyConfig(
-      baseUrl: 'https://discord.com',
-      wsUrl: 'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
+      baseUrl: baseUrl ?? 'https://discord.com',
+      wsUrl: wsUrl ??
+          'wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream',
       channelId: channelId,
       guildId: serverId,
       token: token,
