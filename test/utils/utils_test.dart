@@ -1,8 +1,44 @@
+import 'package:midjourney_client/src/utils/extension.dart';
 import 'package:midjourney_client/src/utils/rate_limiter.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Utils >', () {
+    group('Uri extensions >', () {
+      group('ReplaceHost >', () {
+        test('Replace host', () {
+          const uri = 'https://discord.com/api/v8';
+          const newHost = 'https://proxy.example.com';
+          const newUri = 'https://proxy.example.com/api/v8';
+
+          expect(uri.replaceHost(newHost), newUri);
+        });
+
+        test('Replace host followed by path segments', () {
+          const uri = 'https://discord.com/api/v8';
+          const newHost = 'https://proxy.example.com/api/v9';
+          const newUri = 'https://proxy.example.com/api/v9/api/v8';
+
+          expect(uri.replaceHost(newHost), newUri);
+        });
+
+        test('Replace host with port', () {
+          const uri = 'https://discord.com/api/v8';
+          const newHost = 'https://proxy.example.com:8080';
+          const newUri = 'https://proxy.example.com:8080/api/v8';
+
+          expect(uri.replaceHost(newHost), newUri);
+        });
+
+        test('Replace ports', () {
+          const uri = 'https://discord.com:8080/api/v8';
+          const newHost = 'https://proxy.example.com:8081';
+          const newUri = 'https://proxy.example.com:8081/api/v8';
+
+          expect(uri.replaceHost(newHost), newUri);
+        });
+      });
+    });
     group('Rate Limiter >', () {
       late RateLimiter rateLimiter;
       late Duration period;

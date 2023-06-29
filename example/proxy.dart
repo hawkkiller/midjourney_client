@@ -16,6 +16,7 @@ Future<void> main(List<Object> arguments) async {
     token: Env.token,
     baseUrl: 'https://proxy.lazebny.io/discord/',
     wsUrl: 'wss://proxy.lazebny.io/discord-ws/',
+    cdnUrl: 'https://proxy.lazebny.io/discord-cdn/',
   );
 
   final imagine = client.imagine('Cat in a hat')..listen(print);

@@ -29,6 +29,7 @@ void main() {
     token: 'empty',
     guildId: 'empty',
     channelId: 'empty',
+    cdnUrl: 'empty',
   );
   group('Discord >', () {
 

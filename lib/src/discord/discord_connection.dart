@@ -9,6 +9,7 @@ import 'package:midjourney_client/src/discord/model/discord_ws.dart';
 import 'package:midjourney_client/src/discord/websocket_client.dart';
 import 'package:midjourney_client/src/exception/exception.dart';
 import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
+import 'package:midjourney_client/src/utils/extension.dart';
 import 'package:midjourney_client/src/utils/logger.dart';
 import 'package:midjourney_client/src/utils/stream_transformers.dart';
 
@@ -59,12 +60,12 @@ final class DiscordConnectionImpl implements DiscordConnection {
   final WebsocketClient _webSocketClient;
 
   /// Message waiting pool
-  /// 
+  ///
   /// Key is message ID, value is [WaitMessage]
   final Map<String, WaitMessage> _waitMessages = {};
 
   /// Callbacks for waiting messages
-  /// 
+  ///
   /// Key is nonce, value is a callback
   final _waitMessageCallbacks = <String, ValueChanged<DiscordMessageNonce>>{};
 
@@ -175,7 +176,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
           id: nonce,
           messageId: msg.id,
           content: msg.content,
-          uri: msg.attachments!.first.url,
+          uri: msg.attachments!.first.url.replaceHost(config.cdnUrl),
         ),
         null,
       );
@@ -257,7 +258,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
         progress: progress ?? 0,
         messageId: msg.id,
         content: msg.content,
-        uri: msg.attachments!.first.url,
+        uri: msg.attachments!.first.url.replaceHost(config.cdnUrl),
       ),
       null,
     );

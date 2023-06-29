@@ -16,7 +16,7 @@ class MidjourneyConfig {
     required this.guildId,
     required this.channelId,
     required this.wsUrl,
-    this.cdnUrl,
+    required this.cdnUrl,
   });
 
   /// The base url for the discord api
@@ -35,7 +35,7 @@ class MidjourneyConfig {
   final String channelId;
 
   /// The cdn url for the discord api
-  final String? cdnUrl;
+  final String cdnUrl;
 
   /// Creates a copy of this MidjourneyConfig
   ///
