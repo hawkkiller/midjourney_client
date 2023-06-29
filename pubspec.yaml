@@ -13,7 +13,7 @@ dependencies:
   http: ^1.0.0
   meta: ^1.9.1
   ws: ^0.0.7-dev
-  path: any
+  path: ^1.8.1
 
 dev_dependencies:
   sizzle_lints: ^1.0.10
