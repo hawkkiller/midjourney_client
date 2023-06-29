@@ -12,21 +12,32 @@ jobs:
       name: Code Quality
       runs-on: ubuntu-latest
       steps:
-          - name: Checkout
+          - name: 🔄 Checkout
             uses: actions/checkout@v3
 
-          - uses: dart-lang/setup-dart@v1
+          - name: 🔧 Dart Setup
+            uses: dart-lang/setup-dart@v1
             with:
               sdk: "3.0.5"
 
-          - name: Get Packages
+          - name: 📦 Get Packages
             run: dart pub get
 
-          - name: Analyze
+          - name: 🔍 Analyze
             run: dart analyze --fatal-infos --fatal-warnings .
 
-          - name: Format
+          - name: 📝 Format
             run: dart format --set-exit-if-changed .
             
-          - name: Validate
+          - name: ✅ Validate
             run: dart pub publish --dry-run
+          
+          - name: 🧪 Run tests
+            timeout-minutes: 2
+            run: |
+              dart run coverage:test_with_coverage -fb -o coverage -- \
+                --concurrency=6 --platform vm --coverage=./coverage --reporter=expanded test/midjourney_client_test.dart
+          
+          - name: 📥 Upload coverage to Codecov
+            timeout-minutes: 1
+            uses: codecov/codecov-action@v3
