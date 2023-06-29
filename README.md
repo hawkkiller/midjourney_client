@@ -35,33 +35,30 @@ This installs the midjourney_client library and its dependencies.
 ## Usage
 
 ```dart
+
 import 'dart:async';
 
-import 'package:midjourney_client/midjourney_client.dart';
-
+import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 
 Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney(
-    serverId: 'SERVER_ID',
-    channelId: 'CHANNEL_ID',
-    token: 'TOKEN',
-    loggerLevel: midjourney_client.MLoggerLevel.debug,
+  final client = midjourney_client.Midjourney();
+
+  await client.initialize(
+    channelId: Env.channelId,
+    serverId: Env.serverId,
+    token: Env.token,
   );
 
-  await client.init();
+  final imagine = client.imagine('Elephant on a tree')..listen(print);
 
-  // client.imagine returns stream
-  final imagine = await client.imagine('Elephant on a tree').last;
-  
-  // create variations 
-  final variations = await client.variations(imagine, 1).last;
+  final result = await imagine.last;
 
-  // upscale variations
-  final upscaled = client.upscale(variations, 1)..listen(print);
+  final upscaled = client.upscale(result, 1)..listen(print);
   final uResult = await upscaled.last;
 
   print(uResult);
 }
+
 ```
 
 ## Set up
@@ -110,14 +107,13 @@ import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 import 'env.dart';
 
 Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney(
-    serverId: Env.serverId,
-    channelId: Env.channelId,
-    token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.debug,
-  );
+  final client = midjourney_client.Midjourney();
 
-  await client.init();
+  await client.initialize(
+    channelId: Env.channelId,
+    serverId: Env.serverId,
+    token: Env.token,
+  );
 
   final imagine = client.imagine('Cat in a hat')..listen(print);
 
@@ -145,14 +141,13 @@ import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 import 'env.dart';
 
 Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney(
-    serverId: Env.serverId,
-    channelId: Env.channelId,
-    token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.debug,
-  );
+  final client = midjourney_client.Midjourney();
 
-  await client.init();
+  await client.initialize(
+    channelId: Env.channelId,
+    serverId: Env.serverId,
+    token: Env.token,
+  );
 
   final imagine = client.imagine('Cat with sword')..listen(print);
 
@@ -184,14 +179,13 @@ import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 import 'env.dart';
 
 Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney(
-    serverId: Env.serverId,
-    channelId: Env.channelId,
-    token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.verbose,
-  );
+  final client = midjourney_client.Midjourney();
 
-  await client.init();
+  await client.initialize(
+    channelId: Env.channelId,
+    serverId: Env.serverId,
+    token: Env.token,
+  );
 
   final imagine = client.imagine('Cat with a sword')..listen(print);
 
