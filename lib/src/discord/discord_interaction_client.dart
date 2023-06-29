@@ -3,12 +3,12 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
-import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
-import 'package:midjourney_client/src/core/discord/model/interaction.dart';
-import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
-import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
-import 'package:midjourney_client/src/core/utils/logger.dart';
-import 'package:midjourney_client/src/core/utils/rate_limiter.dart';
+import 'package:midjourney_client/src/discord/model/interaction.dart';
+import 'package:midjourney_client/src/exception/exception.dart';
+import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
+import 'package:midjourney_client/src/midjourney/model/midjourney_message.dart';
+import 'package:midjourney_client/src/utils/logger.dart';
+import 'package:midjourney_client/src/utils/rate_limiter.dart';
 import 'package:snowflaker/snowflaker.dart';
 
 typedef ImageMessageCallback = FutureOr<void> Function(
@@ -67,7 +67,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     );
 
     if (response.statusCode != 204) {
-      throw DiscordInteractionException(
+      throw InteractionException(
         code: response.statusCode,
         message: response.body,
       );

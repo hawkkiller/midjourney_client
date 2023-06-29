@@ -1,5 +1,3 @@
-import 'package:meta/meta.dart';
-
 /// MidjourneyConfig is a class that holds the configuration for the Midjourney
 ///
 /// [baseUrl] is the base url for the discord api
@@ -14,10 +12,11 @@ import 'package:meta/meta.dart';
 class MidjourneyConfig {
   const MidjourneyConfig({
     required this.baseUrl,
-    this.token = '',
-    this.guildId = '',
-    this.channelId = '',
-    this.wsUrl = '',
+    required this.token,
+    required this.guildId,
+    required this.channelId,
+    required this.wsUrl,
+    this.cdnUrl,
   });
 
   /// The base url for the discord api
@@ -35,6 +34,9 @@ class MidjourneyConfig {
   /// The channel id for the discord api
   final String channelId;
 
+  /// The cdn url for the discord api
+  final String? cdnUrl;
+
   /// Creates a copy of this MidjourneyConfig
   ///
   /// but with the given fields replaced with the new values.
@@ -44,6 +46,7 @@ class MidjourneyConfig {
     String? token,
     String? guildId,
     String? channelId,
+    String? cdnUrl,
   }) =>
       MidjourneyConfig(
         baseUrl: baseUrl ?? this.baseUrl,
@@ -51,14 +54,6 @@ class MidjourneyConfig {
         token: token ?? this.token,
         guildId: guildId ?? this.guildId,
         channelId: channelId ?? this.channelId,
+        cdnUrl: cdnUrl ?? this.cdnUrl,
       );
-
-  @visibleForTesting
-  static const empty = MidjourneyConfig(
-    baseUrl: 'empty',
-    wsUrl: 'empty',
-    token: 'empty',
-    guildId: 'empty',
-    channelId: 'empty',
-  );
 }

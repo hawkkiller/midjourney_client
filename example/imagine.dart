@@ -8,14 +8,13 @@ import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 import 'env.dart';
 
 Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney(
-    serverId: Env.serverId,
-    channelId: Env.channelId,
-    token: Env.token,
-    loggerLevel: midjourney_client.MLoggerLevel.debug,
-  );
+  final client = midjourney_client.Midjourney();
 
-  await client.init();
+  await client.initialize(
+    channelId: Env.channelId,
+    serverId: Env.serverId,
+    token: Env.token,
+  );
 
   final imagine = client.imagine('Cat in a hat')..listen(print);
 

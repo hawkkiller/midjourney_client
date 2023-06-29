@@ -1,10 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
-import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
-import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
-import 'package:midjourney_client/src/core/discord/model/interaction.dart';
-import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
-import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
+import 'package:midjourney_client/src/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/discord/model/interaction.dart';
+import 'package:midjourney_client/src/exception/exception.dart';
+import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
+import 'package:midjourney_client/src/midjourney/model/midjourney_message.dart';
 import 'package:snowflaker/snowflaker.dart';
 import 'package:test/test.dart';
 
@@ -23,7 +23,16 @@ class _SnowflakerMock implements Snowflaker {
 }
 
 void main() {
+  const emptyConfig = MidjourneyConfig(
+    baseUrl: 'empty',
+    wsUrl: 'empty',
+    token: 'empty',
+    guildId: 'empty',
+    channelId: 'empty',
+  );
   group('Discord >', () {
+
+    group('', () => null);
     group('Interaction Client >', () {
       late http.Client httpClient;
       late DiscordInteractionClient discordInteractionClient;
@@ -39,7 +48,7 @@ void main() {
         );
         snowflaker = _SnowflakerMock();
         discordInteractionClient = DiscordInteractionClientImpl(
-          config: MidjourneyConfig.empty,
+          config: emptyConfig,
           client: httpClient,
           snowflaker: snowflaker,
         );
@@ -99,7 +108,7 @@ void main() {
           ),
         );
         discordInteractionClient = DiscordInteractionClientImpl(
-          config: MidjourneyConfig.empty,
+          config: emptyConfig,
           client: httpClient,
           snowflaker: snowflaker,
         );
@@ -107,7 +116,7 @@ void main() {
         expect(
           discordInteractionClient.imagine('prompt'),
           throwsA(
-            isA<DiscordInteractionException>().having(
+            isA<InteractionException>().having(
               (e) => e.code,
               'code',
               404,
@@ -125,7 +134,7 @@ void main() {
           ),
         );
         discordInteractionClient = DiscordInteractionClientImpl(
-          config: MidjourneyConfig.empty,
+          config: emptyConfig,
           client: httpClient,
           snowflaker: snowflaker,
         );
@@ -143,7 +152,7 @@ void main() {
         expect(
           response,
           throwsA(
-            isA<DiscordInteractionException>().having(
+            isA<InteractionException>().having(
               (e) => e.code,
               'code',
               404,
@@ -161,7 +170,7 @@ void main() {
           ),
         );
         discordInteractionClient = DiscordInteractionClientImpl(
-          config: MidjourneyConfig.empty,
+          config: emptyConfig,
           client: httpClient,
           snowflaker: snowflaker,
         );
@@ -179,7 +188,7 @@ void main() {
         expect(
           response,
           throwsA(
-            isA<DiscordInteractionException>().having(
+            isA<InteractionException>().having(
               (e) => e.code,
               'code',
               404,

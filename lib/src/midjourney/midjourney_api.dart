@@ -1,14 +1,23 @@
 import 'dart:async';
 
-import 'package:midjourney_client/src/core/discord/discord_connection.dart';
-import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
-import 'package:midjourney_client/src/core/midjourney/model/midjourney_message.dart';
+import 'package:midjourney_client/src/discord/discord_connection.dart';
+import 'package:midjourney_client/src/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/midjourney/model/midjourney_message.dart';
 
+/// The midjourney api
 abstract interface class MidjourneyApi {
   const MidjourneyApi();
 
   /// Initialize the api.
-  Future<void> init();
+  FutureOr<void> initialize();
+
+  /// Closes the api.
+  ///
+  /// After calling this method the connection is closed
+  /// and no more events will be emitted.
+  ///
+  /// If you want to use the api again you have to call [initialize] again.
+  Future<void> close();
 
   /// Imagine a new picture with the given [prompt].
   ///
@@ -32,13 +41,17 @@ abstract interface class MidjourneyApi {
   );
 }
 
+/// @nodoc
 final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   MidjourneyApiDiscordImpl({
     required this.interactionClient,
     required this.connection,
   });
 
+  /// The discord interaction client.
   final DiscordInteractionClient interactionClient;
+
+  /// The discord connection.
   final DiscordConnection connection;
 
   @override
@@ -84,5 +97,8 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   }
 
   @override
-  Future<void> init() => connection.init();
+  Future<void> initialize() => connection.initialize();
+
+  @override
+  Future<void> close() => connection.close();
 }

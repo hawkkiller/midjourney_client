@@ -1,4 +1,4 @@
-import 'package:midjourney_client/src/core/utils/rate_limiter.dart';
+import 'package:midjourney_client/src/utils/rate_limiter.dart';
 import 'package:test/test.dart';
 
 void main() {

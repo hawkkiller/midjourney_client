@@ -4,3 +4,4 @@
 env.json
 .vscode/
 pubspec.lock
+cov

@@ -3,25 +3,28 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:midjourney_client/midjourney_client.dart';
-import 'package:midjourney_client/src/core/discord/discord_interaction_client.dart';
-import 'package:midjourney_client/src/core/discord/exception/discord_exception.dart';
-import 'package:midjourney_client/src/core/discord/model/discord_message.dart';
-import 'package:midjourney_client/src/core/discord/model/discord_ws.dart';
-import 'package:midjourney_client/src/core/discord/websocket_client.dart';
-import 'package:midjourney_client/src/core/midjourney/model/midjourney_config.dart';
-import 'package:midjourney_client/src/core/utils/logger.dart';
-import 'package:midjourney_client/src/core/utils/stream_transformers.dart';
+import 'package:midjourney_client/src/discord/discord_interaction_client.dart';
+import 'package:midjourney_client/src/discord/model/discord_message.dart';
+import 'package:midjourney_client/src/discord/model/discord_ws.dart';
+import 'package:midjourney_client/src/discord/websocket_client.dart';
+import 'package:midjourney_client/src/exception/exception.dart';
+import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
+import 'package:midjourney_client/src/utils/logger.dart';
+import 'package:midjourney_client/src/utils/stream_transformers.dart';
 
+/// @nodoc
 typedef ValueChanged<T> = void Function(T value);
 
 /// Discord message with `associated` nonce
 ///
 /// This is used to create association between nonce and message.
+/// @nodoc
 typedef DiscordMessageNonce = ({String? nonce, DiscordMessage$Message message});
 
 /// Model that is used to store temporary data about a message that is being waited for.
 ///
 /// This model is created when `MESSAGE_CREATE` event is emitted at first.
+/// @nodoc
 typedef WaitMessage = ({String nonce, String prompt});
 
 /// Discord connection interface
@@ -32,9 +35,13 @@ abstract interface class DiscordConnection {
   Stream<MidjourneyMessage$Image> waitImageMessage(int nonce);
 
   /// Initialize the connection.
-  Future<void> init();
+  Future<void> initialize();
+
+  /// Close the connection
+  Future<void> close();
 }
 
+/// @nodoc
 final class DiscordConnectionImpl implements DiscordConnection {
   DiscordConnectionImpl({
     required this.config,
@@ -52,10 +59,23 @@ final class DiscordConnectionImpl implements DiscordConnection {
   final WebsocketClient _webSocketClient;
 
   /// Message waiting pool
+  /// 
+  /// Key is message ID, value is [WaitMessage]
   final Map<String, WaitMessage> _waitMessages = {};
 
   /// Callbacks for waiting messages
+  /// 
+  /// Key is nonce, value is a callback
   final _waitMessageCallbacks = <String, ValueChanged<DiscordMessageNonce>>{};
+
+  @override
+  Future<void> close() async {
+    await _webSocketClient.disconnect();
+    _heartbeatTimer?.cancel();
+  }
+
+  @override
+  Future<void> initialize() => _establishWebSocketConnection();
 
   /// Wait for an [MidjourneyMessage$Image] with a given [nonce]. Returns a stream of [MidjourneyMessage$Image].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
@@ -132,7 +152,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     required String error,
     required String nonce,
   }) async {
-    callback(null, DiscordException(error));
+    callback(null, MidjourneyException(error));
     _waitMessageCallbacks.remove(nonce);
     _waitMessages.remove(nonce);
   }
@@ -397,12 +417,4 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     return (waitMessage: value, id: entry?.key);
   }
-
-  void close() {
-    _webSocketClient.disconnect();
-    _heartbeatTimer?.cancel();
-  }
-
-  @override
-  Future<void> init() => _establishWebSocketConnection();
 }
