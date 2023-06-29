@@ -2,6 +2,13 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.3-alpha (2023-06-29)
+
+- Moved initialization logic to `init` method of `Midjourney`
+- Transformed `Midjourney` to singleton
+- Added `close` method to `Midjourney`
+- Updated ws library to 0.0.7-dev
+
 ## 0.3.2-dev.7 (2023-06-28)
 
 - Updated ws library

@@ -32,7 +32,7 @@ abstract interface class WebsocketClient {
   Future<void> connect(String url);
 
   /// Close the websocket.
-  void disconnect([
+  Future<void> disconnect([
     int? code = 1000,
     String? reason = 'NORMAL_CLOSURE',
   ]);
@@ -53,7 +53,7 @@ final class WebsocketClient$Ws implements WebsocketClient {
   Future<void> connect(String url) => _ws.connect(url);
 
   @override
-  void disconnect([
+  Future<void> disconnect([
     int? code = 1000,
     String? reason = 'NORMAL_CLOSURE',
   ]) =>

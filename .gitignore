@@ -4,3 +4,5 @@
 env.json
 .vscode/
 pubspec.lock
+coverage
+.DS_Store
