@@ -32,7 +32,6 @@ void main() {
     cdnUrl: 'empty',
   );
   group('Discord >', () {
-
     group('', () => null);
     group('Interaction Client >', () {
       late http.Client httpClient;
