@@ -63,8 +63,8 @@ class Midjourney {
     MLoggerLevel logLevel = MLoggerLevel.info,
   }) async {
     final config = MidjourneyConfig(
-      baseUrl: baseUrl ?? 'https://discord.com/api/v10',
-      wsUrl: wsUrl ?? 'wss://gateway.discord.gg/?v=9&encoding=json',
+      baseUrl: baseUrl ?? 'https://discord.com',
+      wsUrl: wsUrl ?? 'wss://gateway.discord.gg/?v=10&encoding=json',
       token: token,
       guildId: serverId,
       channelId: channelId,

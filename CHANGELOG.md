@@ -2,6 +2,10 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.3.4-alpha (2023-06-30)
+
+- Fixed wrong discord baseUrl
+
 ## 0.3.3-alpha (2023-06-29)
 
 - Moved initialization logic to `init` method of `Midjourney`
