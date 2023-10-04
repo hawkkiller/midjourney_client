@@ -2,50 +2,60 @@ import 'dart:developer';
 
 import 'package:meta/meta.dart';
 
-enum MLoggerLevel {
+enum MLoggerLevel implements Comparable<MLoggerLevel> {
   /// show all messages
-  verbose,
+  verbose(200),
 
   /// show debug messages and above
-  debug,
+  debug(400),
 
   /// show info messages and above
-  info,
+  info(600),
 
   /// show warning messages and above
-  warning,
+  warning(800),
 
   /// show error messages and above
-  error;
+  error(1000);
+
+  const MLoggerLevel(this.level);
+
+  final int level;
+
+  bool operator >(MLoggerLevel other) => level > other.level;
+
+  bool operator >=(MLoggerLevel other) => level >= other.level;
+
+  bool operator <(MLoggerLevel other) => level < other.level;
+
+  bool operator <=(MLoggerLevel other) => level <= other.level;
+
+  @override
+  int compareTo(MLoggerLevel other) => level.compareTo(other.level);
 
   bool get isVerbose => switch (this) {
-        MLoggerLevel.verbose => true,
+        >= MLoggerLevel.verbose => true,
         _ => false,
       };
 
   bool get isDebug => switch (this) {
-        MLoggerLevel.verbose => true,
-        MLoggerLevel.debug => true,
+        >= MLoggerLevel.debug => true,
         _ => false,
       };
 
   bool get isInfo => switch (this) {
-        MLoggerLevel.verbose => true,
-        MLoggerLevel.debug => true,
-        MLoggerLevel.info => true,
+        >= MLoggerLevel.info => true,
         _ => false,
       };
 
   bool get isWarning => switch (this) {
-        MLoggerLevel.verbose => true,
-        MLoggerLevel.debug => true,
-        MLoggerLevel.info => true,
-        MLoggerLevel.warning => true,
+        >= MLoggerLevel.warning => true,
         _ => false,
       };
 
   bool get isError => switch (this) {
-        _ => true,
+        >= MLoggerLevel.error => true,
+        _ => false,
       };
 }
 

@@ -13,13 +13,15 @@ Future<void> main(List<Object> arguments) async {
     channelId: Env.channelId,
     serverId: Env.serverId,
     token: Env.token,
+    logLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
-  final imagine = client.imagine('Elephant on a tree')..listen(print);
+  final imagine = client.imagine('Elephant on a tree').asBroadcastStream()
+    ..listen(print);
 
   final result = await imagine.last;
 
-  final upscaled = client.upscale(result, 1)..listen(print);
+  final upscaled = client.upscale(result, 1).asBroadcastStream()..listen(print);
   final uResult = await upscaled.last;
 
   print(uResult);

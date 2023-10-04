@@ -54,16 +54,14 @@ class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
   @override
   String toString() => (
         StringBuffer()
-          ..writeAll(
-            [
-              r'MidjourneyMessage$Progress(',
-              'progress: $progress, ',
-              'messageId: $messageId, ',
-              'content: $content, ',
-              'uri: $uri, ',
-              'id: $id',
-              ')',
-            ],
+          ..write(
+            r'MidjourneyMessage$Progress('
+            'progress: $progress, '
+            'messageId: $messageId, '
+            'content: $content, '
+            'uri: $uri, '
+            'id: $id'
+            ')',
           ),
       ).toString();
 }
@@ -79,15 +77,13 @@ class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
   @override
   String toString() => (
         StringBuffer()
-          ..writeAll(
-            [
-              r'MidjourneyMessage$Finish(',
-              'id: $messageId, ',
-              'content: $content, ',
-              'uri: $uri',
-              'id: $id, ',
-              ')',
-            ],
+          ..write(
+            r'MidjourneyMessage$Finish('
+            'id: $messageId, '
+            'content: $content, '
+            'uri: $uri'
+            'id: $id, '
+            ')',
           ),
       ).toString();
 }

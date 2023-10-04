@@ -220,7 +220,7 @@ void main() {
           ),
         ],
       );
-      final interactionData = InteractionData$ApplicationCommand(
+      final interactionData = InteractionDataApplicationCommand(
         version: 'version',
         id: 'id',
         name: 'name',

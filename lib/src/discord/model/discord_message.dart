@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 
 @immutable
-sealed class DiscordMessage {
-  const DiscordMessage();
+sealed class DiscordEvent {
+  const DiscordEvent();
 }
 
-final class DiscordMessage$Unsupported extends DiscordMessage {
-  const DiscordMessage$Unsupported({
+final class DiscordEventUnsupported extends DiscordEvent {
+  const DiscordEventUnsupported({
     required this.type,
     required this.data,
   });
@@ -23,8 +23,8 @@ final class DiscordMessage$Unsupported extends DiscordMessage {
       ')';
 }
 
-sealed class DiscordMessage$Message extends DiscordMessage {
-  const DiscordMessage$Message({
+sealed class DiscordMessage extends DiscordEvent {
+  const DiscordMessage({
     required this.id,
     required this.content,
     required this.embeds,
@@ -53,18 +53,18 @@ sealed class DiscordMessage$Message extends DiscordMessage {
       ')';
 
   bool get created => switch (this) {
-        DiscordMessage$MessageCreate() => true,
+        DiscordMessageCreate() => true,
         _ => false,
       };
 
   bool get updated => switch (this) {
-        DiscordMessage$MessageUpdate() => true,
+        DiscordMessageUpdate() => true,
         _ => false,
       };
 }
 
-final class DiscordMessage$MessageCreate extends DiscordMessage$Message {
-  const DiscordMessage$MessageCreate({
+final class DiscordMessageCreate extends DiscordMessage {
+  const DiscordMessageCreate({
     required super.id,
     required super.content,
     required super.embeds,
@@ -74,8 +74,8 @@ final class DiscordMessage$MessageCreate extends DiscordMessage$Message {
     super.attachments,
   });
 
-  factory DiscordMessage$MessageCreate.fromJson(Map<String, Object?> json) =>
-      DiscordMessage$MessageCreate(
+  factory DiscordMessageCreate.fromJson(Map<String, Object?> json) =>
+      DiscordMessageCreate(
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
         content: json['content']! as String,
@@ -90,8 +90,8 @@ final class DiscordMessage$MessageCreate extends DiscordMessage$Message {
       );
 }
 
-final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
-  const DiscordMessage$MessageUpdate({
+final class DiscordMessageUpdate extends DiscordMessage {
+  const DiscordMessageUpdate({
     required super.id,
     required super.embeds,
     required super.content,
@@ -101,8 +101,8 @@ final class DiscordMessage$MessageUpdate extends DiscordMessage$Message {
     super.nonce,
   });
 
-  factory DiscordMessage$MessageUpdate.fromJson(Map<String, Object?> json) =>
-      DiscordMessage$MessageUpdate(
+  factory DiscordMessageUpdate.fromJson(Map<String, Object?> json) =>
+      DiscordMessageUpdate(
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
         content: json['content'] as String? ?? '',
@@ -222,11 +222,11 @@ const $discordMessageDecoder = DiscordMessageDecoder();
 
 @immutable
 @internal
-class DiscordMessageDecoder extends Converter<String, DiscordMessage> {
+class DiscordMessageDecoder extends Converter<String, DiscordEvent> {
   const DiscordMessageDecoder();
 
   @override
-  DiscordMessage convert(String input) {
+  DiscordEvent convert(String input) {
     final json = jsonDecode(input);
 
     if (json is! Map<String, Object?>) {
@@ -239,12 +239,12 @@ class DiscordMessageDecoder extends Converter<String, DiscordMessage> {
           'd': final Map<String, Object?> d,
         }) {
       return switch (t) {
-        'MESSAGE_CREATE' => DiscordMessage$MessageCreate.fromJson(d),
-        'MESSAGE_UPDATE' => DiscordMessage$MessageUpdate.fromJson(d),
-        _ => DiscordMessage$Unsupported(type: t, data: d),
+        'MESSAGE_CREATE' => DiscordMessageCreate.fromJson(d),
+        'MESSAGE_UPDATE' => DiscordMessageUpdate.fromJson(d),
+        _ => DiscordEventUnsupported(type: t, data: d),
       };
     }
 
-    return DiscordMessage$Unsupported(type: 'Unknown', data: json);
+    return DiscordEventUnsupported(type: 'Unknown', data: json);
   }
 }

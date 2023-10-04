@@ -7,23 +7,24 @@ import 'package:midjourney_client/src/midjourney/midjourney_api.dart';
 import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
 import 'package:midjourney_client/src/midjourney/model/midjourney_message.dart';
 import 'package:midjourney_client/src/utils/logger.dart';
+import 'package:midjourney_client/src/utils/streamed_message.dart';
 
-/// The main instance of the midjourney client.
+/// Provides access to the midjourney functionality.
 ///
-/// This is the main class to use to interact with the midjourney api.
+/// This is a simple wrapper around more low-level implementations
+/// like [MidjourneyApi] or [DiscordConnection].
+///
+/// Currently, this class supports only discord cause there is no
+/// official Midjourney API yet.
 ///
 /// See [imagine], [variation], [upscale] for more information.
-class Midjourney {
-  factory Midjourney() => instance;
-
-  Midjourney._();
-
-  static final instance = Midjourney._();
-
-  /// The api to use.
+final class Midjourney {
+  /// The api implementation.
+  ///
+  /// This is set when [initialize] is called.
   MidjourneyApi? _api;
 
-  MidjourneyApi get _$api => _api ?? (throw const NotInitializedException());
+  MidjourneyApi get _apiBang => _api ?? (throw const NotInitializedException());
 
   /// Initialize the client.
   ///
@@ -79,7 +80,7 @@ class Midjourney {
       connection: DiscordConnectionImpl(config: config),
       interactionClient: DiscordInteractionClientImpl(config: config),
     );
-    return _$api.initialize();
+    return _apiBang.initialize();
   }
 
   /// Releases the resources.
@@ -98,24 +99,20 @@ class Midjourney {
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> imagine(String prompt) =>
-      _$api.imagine(prompt).asBroadcastStream();
+  StreamedMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
+      imagine(String prompt) => StreamedMessage.from(_apiBang.imagine(prompt));
 
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(
-    MidjourneyMessage$Image imageMessage,
-    int index,
-  ) =>
-      _$api.variation(imageMessage, index).asBroadcastStream();
+  StreamedMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
+      variation(MidjourneyMessage$Image imageMessage, int index) =>
+          StreamedMessage.from(_apiBang.variation(imageMessage, index));
 
   /// Upscale the given [imageMessage].
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> upscale(
-    MidjourneyMessage$Image imageMessage,
-    int index,
-  ) =>
-      _$api.upscale(imageMessage, index).asBroadcastStream();
+  StreamedMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
+      upscale(MidjourneyMessage$Image imageMessage, int index) =>
+          StreamedMessage.from(_apiBang.upscale(imageMessage, index));
 }

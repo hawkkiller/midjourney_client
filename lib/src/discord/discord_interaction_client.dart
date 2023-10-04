@@ -88,7 +88,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
-      data: InteractionData$ApplicationCommand(
+      data: InteractionDataApplicationCommand(
         version: '1118961510123847772',
         id: '938956540159881230',
         name: 'imagine',
@@ -140,7 +140,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
-      data: InteractionData$MessageComponent(
+      data: InteractionDataMessageComponent(
         customId: 'MJ::JOB::variation::$index::$hash',
         componentType: MessageComponentType.button,
       ),
@@ -166,7 +166,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
-      data: InteractionData$MessageComponent(
+      data: InteractionDataMessageComponent(
         customId: 'MJ::JOB::upsample::$index::$hash',
         componentType: MessageComponentType.button,
       ),

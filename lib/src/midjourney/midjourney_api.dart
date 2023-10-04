@@ -41,8 +41,8 @@ abstract interface class MidjourneyApi {
   );
 }
 
-/// @nodoc
-final class MidjourneyApiDiscordImpl extends MidjourneyApi {
+/// The midjourney api implementation for discord.
+final class MidjourneyApiDiscordImpl implements MidjourneyApi {
   MidjourneyApiDiscordImpl({
     required this.interactionClient,
     required this.connection,

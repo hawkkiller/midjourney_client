@@ -20,7 +20,7 @@ typedef ValueChanged<T> = void Function(T value);
 ///
 /// This is used to create association between nonce and message.
 /// @nodoc
-typedef DiscordMessageNonce = ({String? nonce, DiscordMessage$Message message});
+typedef DiscordMessageNonce = ({String? nonce, DiscordMessage message});
 
 /// Model that is used to store temporary data about a message that is being waited for.
 ///
@@ -164,7 +164,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// If the message has no nonce, remove it from the waiting pool and trigger an image generation finished event.
   Future<void> _handleCreatedImageMessage(
-    DiscordMessage$Message msg,
+    DiscordMessage msg,
     ImageMessageCallback callback,
     String nonce,
   ) async {
@@ -243,7 +243,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// Trigger an image progress event.
   Future<void> _handleUpdatedImageMessage(
-    DiscordMessage$Message msg,
+    DiscordMessage msg,
     ImageMessageCallback callback,
     String nonce,
   ) async {
@@ -272,7 +272,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     _webSocketClient.stream
         .whereType<String>()
         .map($discordMessageDecoder.convert)
-        .whereType<DiscordMessage$Message>()
+        .whereType<DiscordMessage>()
         .where((event) {
           final isChannel = event.channelId == config.channelId;
           // midjourney bot id in discord
@@ -300,7 +300,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// This method is called once the connection is established.
   Future<void> _authenticate() async {
-    final authJson = DiscordWs$Auth(config.token).toJson();
+    final authJson = DiscordWsAuth(config.token).toJson();
     await _webSocketClient.add(jsonEncode(authJson));
     MLogger.d('Auth sent $authJson');
   }
@@ -320,14 +320,14 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// This method is called periodically to maintain connection.
   Future<void> _sendHeartbeat(int seq) async {
-    final heartbeatJson = DiscordWs$Heartbeat(seq).toJson();
+    final heartbeatJson = DiscordWsHeartbeat(seq).toJson();
     await _webSocketClient.add(jsonEncode(heartbeatJson));
     MLogger.d('Heartbeat sent $heartbeatJson');
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
   DiscordMessageNonce _associateDiscordMessageWithNonce(
-    DiscordMessage$Message msg,
+    DiscordMessage msg,
   ) {
     final nonce = _getNonceForMessage(msg);
     return (nonce: nonce, message: msg);
@@ -341,14 +341,14 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Retrieve nonce associated with a message
-  String? _getNonceForMessage(DiscordMessage$Message msg) {
+  String? _getNonceForMessage(DiscordMessage msg) {
     if (msg.created) return _getNonceForCreatedMessage(msg);
     if (msg.updated) return _getNonceForUpdatedMessage(msg);
     return null;
   }
 
   /// Get nonce for created message
-  String? _getNonceForCreatedMessage(DiscordMessage$Message msg) {
+  String? _getNonceForCreatedMessage(DiscordMessage msg) {
     if (msg.nonce != null) {
       MLogger.d('Created message: ${msg.id}');
       return msg.nonce;
@@ -367,7 +367,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Get nonce for updated message
-  String? _getNonceForUpdatedMessage(DiscordMessage$Message msg) {
+  String? _getNonceForUpdatedMessage(DiscordMessage msg) {
     final waitMessage = _waitMessages[msg.id];
     if (waitMessage == null) return null;
     final nonce = waitMessage.nonce;
