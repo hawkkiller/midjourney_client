@@ -18,12 +18,12 @@ Future<void> main(List<Object> arguments) async {
 
   final imagine = client.imagine('Cat with sword')..listen(print);
 
-  final result = await imagine.last;
+  final imagineResult = await imagine.last;
 
-  final variation = client.variation(result, 1)..listen(print);
+  final variation = client.variation(imagineResult, 1)..listen(print);
 
-  final vResult = await variation.last;
+  final variationResult = await variation.last;
 
-  print(vResult);
+  print(variationResult);
   exit(0);
 }

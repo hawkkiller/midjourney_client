@@ -18,12 +18,12 @@ Future<void> main(List<Object> arguments) async {
 
   final imagine = client.imagine('Cat with a sword')..listen(print);
 
-  final result = await imagine.last;
+  final imagineResult = await imagine.finished;
 
-  final upscaled = client.upscale(result, 1)..listen(print);
+  final upscaled = client.upscale(imagineResult, 1)..listen(print);
 
-  final uResult = await upscaled.last;
+  final upscaledResult = await upscaled.finished;
 
-  print('Result: $uResult');
+  print('Result: $upscaledResult');
   exit(0);
 }
