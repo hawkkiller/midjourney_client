@@ -7,23 +7,27 @@ import 'package:midjourney_client/src/midjourney/midjourney_api.dart';
 import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
 import 'package:midjourney_client/src/midjourney/model/midjourney_message.dart';
 import 'package:midjourney_client/src/utils/logger.dart';
+import 'package:midjourney_client/src/utils/streamed_message.dart';
 
-/// The main instance of the midjourney client.
+typedef StreamedImage
+    = StreamedMessage<MidjourneyMessageImage, MidjourneyMessageImageFinish>;
+
+/// Provides access to the midjourney functionality.
 ///
-/// This is the main class to use to interact with the midjourney api.
+/// This is a simple wrapper around more low-level implementations
+/// like [MidjourneyApi] or [DiscordConnection].
+///
+/// Currently, this class supports only discord cause there is no
+/// official Midjourney API yet.
 ///
 /// See [imagine], [variation], [upscale] for more information.
-class Midjourney {
-  factory Midjourney() => instance;
+final class Midjourney {
+  /// The api implementation.
+  ///
+  /// This is set when [initialize] is called.
+  MidjourneyApi? _$api;
 
-  Midjourney._();
-
-  static final instance = Midjourney._();
-
-  /// The api to use.
-  MidjourneyApi? _api;
-
-  MidjourneyApi get _$api => _api ?? (throw const NotInitializedException());
+  MidjourneyApi get _api => _$api ?? (throw const NotInitializedException());
 
   /// Initialize the client.
   ///
@@ -71,51 +75,45 @@ class Midjourney {
       cdnUrl: cdnUrl ?? 'https://cdn.discordapp.com',
     );
     MLogger.level = logLevel;
-    if (_api != null) {
+    if (_$api != null) {
       MLogger.w('Midjourney client is already initialized, closing it');
       await close();
     }
-    _api ??= MidjourneyApiDiscordImpl(
+    _$api ??= MidjourneyApiDiscordImpl(
       connection: DiscordConnectionImpl(config: config),
       interactionClient: DiscordInteractionClientImpl(config: config),
     );
-    return _$api.initialize();
+    return _api.initialize();
   }
 
   /// Releases the resources.
   /// If you want to use the client again, you need to call [initialize] again.
   Future<void> close() async {
     MLogger.i('Closing midjourney client');
-    if (_api == null) {
+    if (_$api == null) {
       MLogger.w('Midjourney client is already closed or not initialized');
       return;
     }
-    await _api?.close();
-    _api = null;
+    await _$api?.close();
+    _$api = null;
     MLogger.i('Closed midjourney client');
   }
 
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> imagine(String prompt) =>
-      _$api.imagine(prompt).asBroadcastStream();
+  StreamedImage imagine(String prompt) =>
+      StreamedMessage.from(_api.imagine(prompt));
 
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(
-    MidjourneyMessage$Image imageMessage,
-    int index,
-  ) =>
-      _$api.variation(imageMessage, index).asBroadcastStream();
+  StreamedImage variation(MidjourneyMessageImage imageMessage, int index) =>
+      StreamedMessage.from(_api.variation(imageMessage, index));
 
   /// Upscale the given [imageMessage].
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> upscale(
-    MidjourneyMessage$Image imageMessage,
-    int index,
-  ) =>
-      _$api.upscale(imageMessage, index).asBroadcastStream();
+  StreamedImage upscale(MidjourneyMessageImage imageMessage, int index) =>
+      StreamedMessage.from(_api.upscale(imageMessage, index));
 }

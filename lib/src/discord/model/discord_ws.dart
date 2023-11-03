@@ -1,12 +1,12 @@
 /// Base discord model
-sealed class DiscordWs {
-  const DiscordWs();
+sealed class DiscordWsModel {
+  const DiscordWsModel();
 
   Map<String, Object?> toJson();
 }
 
-class DiscordWs$Auth extends DiscordWs {
-  const DiscordWs$Auth(this.token);
+class DiscordWsAuth extends DiscordWsModel {
+  const DiscordWsAuth(this.token);
 
   final String token;
 
@@ -25,8 +25,8 @@ class DiscordWs$Auth extends DiscordWs {
       };
 }
 
-class DiscordWs$Heartbeat extends DiscordWs {
-  const DiscordWs$Heartbeat(this.sequence);
+class DiscordWsHeartbeat extends DiscordWsModel {
+  const DiscordWsHeartbeat(this.sequence);
 
   final int sequence;
 

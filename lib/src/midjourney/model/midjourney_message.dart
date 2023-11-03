@@ -2,8 +2,8 @@ abstract class MidjourneyMessage {
   const MidjourneyMessage();
 }
 
-sealed class MidjourneyMessage$Image extends MidjourneyMessage {
-  const MidjourneyMessage$Image({
+sealed class MidjourneyMessageImage extends MidjourneyMessage {
+  const MidjourneyMessageImage({
     required this.messageId,
     required this.content,
     required this.id,
@@ -29,18 +29,18 @@ sealed class MidjourneyMessage$Image extends MidjourneyMessage {
   final String id;
 
   int get progress => switch (this) {
-        final MidjourneyMessage$ImageProgress v => v.progress,
-        MidjourneyMessage$ImageFinish() => 100,
+        final MidjourneyMessageImageProgress v => v.progress,
+        MidjourneyMessageImageFinish() => 100,
       };
 
   bool get finished => switch (this) {
-        MidjourneyMessage$ImageProgress() => false,
-        MidjourneyMessage$ImageFinish() => true,
+        MidjourneyMessageImageProgress() => false,
+        MidjourneyMessageImageFinish() => true,
       };
 }
 
-class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
-  const MidjourneyMessage$ImageProgress({
+class MidjourneyMessageImageProgress extends MidjourneyMessageImage {
+  const MidjourneyMessageImageProgress({
     required this.progress,
     required super.messageId,
     required super.content,
@@ -54,22 +54,20 @@ class MidjourneyMessage$ImageProgress extends MidjourneyMessage$Image {
   @override
   String toString() => (
         StringBuffer()
-          ..writeAll(
-            [
-              r'MidjourneyMessage$Progress(',
-              'progress: $progress, ',
-              'messageId: $messageId, ',
-              'content: $content, ',
-              'uri: $uri, ',
-              'id: $id',
-              ')',
-            ],
+          ..write(
+            r'MidjourneyMessage$Progress('
+            'progress: $progress, '
+            'messageId: $messageId, '
+            'content: $content, '
+            'uri: $uri, '
+            'id: $id'
+            ')',
           ),
       ).toString();
 }
 
-class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
-  const MidjourneyMessage$ImageFinish({
+class MidjourneyMessageImageFinish extends MidjourneyMessageImage {
+  const MidjourneyMessageImageFinish({
     required super.messageId,
     required super.content,
     required super.uri,
@@ -79,15 +77,13 @@ class MidjourneyMessage$ImageFinish extends MidjourneyMessage$Image {
   @override
   String toString() => (
         StringBuffer()
-          ..writeAll(
-            [
-              r'MidjourneyMessage$Finish(',
-              'id: $messageId, ',
-              'content: $content, ',
-              'uri: $uri',
-              'id: $id, ',
-              ')',
-            ],
+          ..write(
+            r'MidjourneyMessage$Finish('
+            'id: $messageId, '
+            'content: $content, '
+            'uri: $uri'
+            'id: $id, '
+            ')',
           ),
       ).toString();
 }

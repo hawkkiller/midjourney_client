@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
 
@@ -13,14 +14,16 @@ Future<void> main(List<Object> arguments) async {
     channelId: Env.channelId,
     serverId: Env.serverId,
     token: Env.token,
+    logLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
   final imagine = client.imagine('Elephant on a tree')..listen(print);
 
-  final result = await imagine.last;
+  final imagineResult = await imagine.finished;
 
-  final upscaled = client.upscale(result, 1)..listen(print);
-  final uResult = await upscaled.last;
+  final upscaled = client.upscale(imagineResult, 1)..listen(print);
+  final upscaleResult = await upscaled.finished;
 
-  print(uResult);
+  print(upscaleResult);
+  exit(0);
 }

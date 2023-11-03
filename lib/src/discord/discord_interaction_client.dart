@@ -12,7 +12,7 @@ import 'package:midjourney_client/src/utils/rate_limiter.dart';
 import 'package:snowflaker/snowflaker.dart';
 
 typedef ImageMessageCallback = FutureOr<void> Function(
-  MidjourneyMessage$Image? msg,
+  MidjourneyMessageImage? msg,
   Exception? error,
 );
 
@@ -21,10 +21,10 @@ abstract interface class DiscordInteractionClient {
   Future<int> imagine(String prompt);
 
   /// Create a new variation based on the picture
-  Future<int> variation(MidjourneyMessage$Image imageMessage, int index);
+  Future<int> variation(MidjourneyMessageImage imageMessage, int index);
 
   /// Upscale the given [imageMessage] to better quality.
-  Future<int> upscale(MidjourneyMessage$Image imageMessage, int index);
+  Future<int> upscale(MidjourneyMessageImage imageMessage, int index);
 }
 
 final class DiscordInteractionClientImpl implements DiscordInteractionClient {
@@ -88,7 +88,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
-      data: InteractionData$ApplicationCommand(
+      data: InteractionDataApplicationCommand(
         version: '1118961510123847772',
         id: '938956540159881230',
         name: 'imagine',
@@ -128,7 +128,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  Future<int> variation(MidjourneyMessage$Image imageMessage, int index) async {
+  Future<int> variation(MidjourneyMessageImage imageMessage, int index) async {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
     final variationPayload = Interaction(
@@ -140,7 +140,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
-      data: InteractionData$MessageComponent(
+      data: InteractionDataMessageComponent(
         customId: 'MJ::JOB::variation::$index::$hash',
         componentType: MessageComponentType.button,
       ),
@@ -154,7 +154,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  Future<int> upscale(MidjourneyMessage$Image imageMessage, int index) async {
+  Future<int> upscale(MidjourneyMessageImage imageMessage, int index) async {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
     final upscalePayload = Interaction(
@@ -166,7 +166,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
-      data: InteractionData$MessageComponent(
+      data: InteractionDataMessageComponent(
         customId: 'MJ::JOB::upsample::$index::$hash',
         componentType: MessageComponentType.button,
       ),

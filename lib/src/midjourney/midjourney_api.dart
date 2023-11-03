@@ -22,27 +22,27 @@ abstract interface class MidjourneyApi {
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> imagine(String prompt);
+  Stream<MidjourneyMessageImage> imagine(String prompt);
 
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> variation(
-    MidjourneyMessage$Image imageMessage,
+  Stream<MidjourneyMessageImage> variation(
+    MidjourneyMessageImage imageMessage,
     int index,
   );
 
   /// Upscale the given [imageMessage] to better quality.
   ///
   /// Returns streamed messages of progress.
-  Stream<MidjourneyMessage$Image> upscale(
-    MidjourneyMessage$Image imageMessage,
+  Stream<MidjourneyMessageImage> upscale(
+    MidjourneyMessageImage imageMessage,
     int index,
   );
 }
 
-/// @nodoc
-final class MidjourneyApiDiscordImpl extends MidjourneyApi {
+/// The midjourney api implementation for discord.
+final class MidjourneyApiDiscordImpl implements MidjourneyApi {
   MidjourneyApiDiscordImpl({
     required this.interactionClient,
     required this.connection,
@@ -55,7 +55,7 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   final DiscordConnection connection;
 
   @override
-  Stream<MidjourneyMessage$Image> imagine(String prompt) async* {
+  Stream<MidjourneyMessageImage> imagine(String prompt) async* {
     // Add a seed to the prompt to avoid collisions because prompt
     // is the only thing that is lasted between requests.
     prompt =
@@ -65,8 +65,8 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   }
 
   @override
-  Stream<MidjourneyMessage$Image> variation(
-    MidjourneyMessage$Image imageMessage,
+  Stream<MidjourneyMessageImage> variation(
+    MidjourneyMessageImage imageMessage,
     int index,
   ) async* {
     if (index < 1 && index > 4) {
@@ -81,8 +81,8 @@ final class MidjourneyApiDiscordImpl extends MidjourneyApi {
   }
 
   @override
-  Stream<MidjourneyMessage$Image> upscale(
-    MidjourneyMessage$Image imageMessage,
+  Stream<MidjourneyMessageImage> upscale(
+    MidjourneyMessageImage imageMessage,
     int index,
   ) async* {
     if (index < 1 && index > 4) {

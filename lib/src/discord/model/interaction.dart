@@ -38,8 +38,8 @@ sealed class InteractionData {
   Map<String, Object?> toJson();
 }
 
-class InteractionData$MessageComponent extends InteractionData {
-  InteractionData$MessageComponent({
+class InteractionDataMessageComponent extends InteractionData {
+  InteractionDataMessageComponent({
     required this.customId,
     required this.componentType,
     this.values,
@@ -57,8 +57,8 @@ class InteractionData$MessageComponent extends InteractionData {
       };
 }
 
-class InteractionData$ApplicationCommand extends InteractionData {
-  InteractionData$ApplicationCommand({
+class InteractionDataApplicationCommand extends InteractionData {
+  InteractionDataApplicationCommand({
     required this.applicationCommand,
     required this.version,
     required this.id,

@@ -18,7 +18,7 @@ Future<void> main(List<Object> arguments) async {
 
   final imagine = client.imagine('Cat in a hat')..listen(print);
 
-  final result = await imagine.last;
+  final result = await imagine.finished;
 
   print('Result: $result');
   exit(0);
