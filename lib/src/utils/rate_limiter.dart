@@ -1,16 +1,16 @@
 import 'dart:async';
 
 /// A simple rate limiter.
-/// 
+///
 /// Set [limit] to the maximum number of calls per [period].
-/// 
+///
 /// If the number of calls exceeds the limit, the next call will be delayed
-/// 
+///
 /// Example:
-/// 
+///
 /// ```dart
 /// final rateLimiter = RateLimiter(limit: 5, period: Duration(seconds: 1));
-/// 
+///
 /// for (var i = 0; i < 10; i++) {
 ///  await rateLimiter(() async {
 ///   print('Hello world!');
