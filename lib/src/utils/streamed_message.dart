@@ -4,10 +4,21 @@ import 'dart:async';
 ///
 /// [T] is the type of the stream's data.
 /// [S] is the type of the stream's expected data.
-final class StreamedBroadcastMessage<T extends Object, S extends Object>
+final class StreamedMessage<T extends Object, S extends T>
     extends StreamView<T> {
-  StreamedBroadcastMessage.from(Stream<T> stream)
-      : super(stream.asBroadcastStream());
+  StreamedMessage.from(super.stream);
 
   Future<S> get finished => last.then((value) => value as S);
+
+  @override
+  Stream<T> asBroadcastStream({
+    void Function(StreamSubscription<T> subscription)? onListen,
+    void Function(StreamSubscription<T> subscription)? onCancel,
+  }) =>
+      StreamedMessage.from(
+        super.asBroadcastStream(
+          onListen: onListen,
+          onCancel: onCancel,
+        ),
+      );
 }

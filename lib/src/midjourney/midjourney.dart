@@ -99,20 +99,20 @@ final class Midjourney {
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
-  StreamedBroadcastMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
-      imagine(String prompt) => StreamedBroadcastMessage.from(_apiBang.imagine(prompt));
+  StreamedMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
+      imagine(String prompt) => StreamedMessage.from(_apiBang.imagine(prompt));
 
   /// Create a new variation based on the picture
   ///
   /// Returns streamed messages of progress.
-  StreamedBroadcastMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
+  StreamedMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
       variation(MidjourneyMessage$Image imageMessage, int index) =>
-          StreamedBroadcastMessage.from(_apiBang.variation(imageMessage, index));
+          StreamedMessage.from(_apiBang.variation(imageMessage, index));
 
   /// Upscale the given [imageMessage].
   ///
   /// Returns streamed messages of progress.
-  StreamedBroadcastMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
+  StreamedMessage<MidjourneyMessage$Image, MidjourneyMessage$ImageFinish>
       upscale(MidjourneyMessage$Image imageMessage, int index) =>
-          StreamedBroadcastMessage.from(_apiBang.upscale(imageMessage, index));
+          StreamedMessage.from(_apiBang.upscale(imageMessage, index));
 }
