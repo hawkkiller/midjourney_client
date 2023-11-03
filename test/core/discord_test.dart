@@ -67,7 +67,7 @@ void main() {
 
       test('Variation should work correctly with 204', () {
         final response = discordInteractionClient.variation(
-          const MidjourneyMessage$ImageFinish(
+          const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
             messageId: '',
@@ -84,7 +84,7 @@ void main() {
 
       test('Upscale should work correctly with 204', () {
         final response = discordInteractionClient.upscale(
-          const MidjourneyMessage$ImageFinish(
+          const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
             messageId: '',
@@ -140,7 +140,7 @@ void main() {
         );
 
         final response = discordInteractionClient.variation(
-          const MidjourneyMessage$ImageFinish(
+          const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
             messageId: '',
@@ -176,7 +176,7 @@ void main() {
         );
 
         final response = discordInteractionClient.upscale(
-          const MidjourneyMessage$ImageFinish(
+          const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
             messageId: '',

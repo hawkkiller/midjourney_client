@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:midjourney_client/midjourney_client.dart';
+import 'package:midjourney_client/src/discord/constants/constants.dart';
 import 'package:midjourney_client/src/discord/discord_interaction_client.dart';
 import 'package:midjourney_client/src/discord/model/discord_message.dart';
 import 'package:midjourney_client/src/discord/model/discord_ws.dart';
@@ -13,27 +14,24 @@ import 'package:midjourney_client/src/utils/extension.dart';
 import 'package:midjourney_client/src/utils/logger.dart';
 import 'package:midjourney_client/src/utils/stream_transformers.dart';
 
-/// @nodoc
 typedef ValueChanged<T> = void Function(T value);
 
 /// Discord message with `associated` nonce
 ///
 /// This is used to create association between nonce and message.
-/// @nodoc
-typedef DiscordMessageNonce = ({String? nonce, DiscordMessage message});
+typedef DiscordMessageWithNonce = ({String? nonce, DiscordMessage message});
 
 /// Model that is used to store temporary data about a message that is being waited for.
 ///
 /// This model is created when `MESSAGE_CREATE` event is emitted at first.
-/// @nodoc
-typedef WaitMessage = ({String nonce, String prompt});
+typedef WaitDiscordMessage = ({String nonce, String prompt});
 
 /// Discord connection interface
 ///
 /// This is used to communicate with Discord.
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [nonce].
-  Stream<MidjourneyMessage$Image> waitImageMessage(int nonce);
+  Stream<MidjourneyMessageImage> waitImageMessage(int nonce);
 
   /// Initialize the connection.
   Future<void> initialize();
@@ -42,7 +40,6 @@ abstract interface class DiscordConnection {
   Future<void> close();
 }
 
-/// @nodoc
 final class DiscordConnectionImpl implements DiscordConnection {
   DiscordConnectionImpl({
     required this.config,
@@ -61,30 +58,39 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   /// Message waiting pool
   ///
-  /// Key is message ID, value is [WaitMessage]
-  final Map<String, WaitMessage> _waitMessages = {};
+  /// Key is message ID, value is [WaitDiscordMessage]
+  final Map<String, WaitDiscordMessage> _waitMessages = {};
 
   /// Callbacks for waiting messages
   ///
   /// Key is nonce, value is a callback
-  final _waitMessageCallbacks = <String, ValueChanged<DiscordMessageNonce>>{};
+  final _waitMessageCallbacks =
+      <String, ValueChanged<DiscordMessageWithNonce>>{};
+
+  StreamSubscription<DiscordMessageWithNonce>? _messagesSubscription;
+  StreamSubscription<WebsocketState>? _socketStateSubscription;
 
   @override
   Future<void> close() async {
-    await _webSocketClient.disconnect();
     _heartbeatTimer?.cancel();
+    await _webSocketClient.disconnect();
+    await _messagesSubscription?.cancel();
+    await _socketStateSubscription?.cancel();
+
+    _waitMessageCallbacks.clear();
+    _waitMessages.clear();
   }
 
   @override
   Future<void> initialize() => _establishWebSocketConnection();
 
-  /// Wait for an [MidjourneyMessage$Image] with a given [nonce]. Returns a stream of [MidjourneyMessage$Image].
+  /// Wait for an [MidjourneyMessageImage] with a given [nonce]. Returns a stream of [MidjourneyMessageImage].
   /// This stream broadcasts multiple subscribers and synchronizes the delivery of events.
   /// It registers a callback function that adds new messages to the stream or, in case of an error,
   /// adds the error to the stream and then closes it.
   @override
-  Stream<MidjourneyMessage$Image> waitImageMessage(int nonce) async* {
-    final controller = StreamController<MidjourneyMessage$Image>.broadcast(
+  Stream<MidjourneyMessageImage> waitImageMessage(int nonce) async* {
+    final controller = StreamController<MidjourneyMessageImage>.broadcast(
       sync: true,
     );
 
@@ -128,7 +134,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// If the nonce of the incoming message matches the expected nonce,
   /// handle the message according to its state and invoke the callback with appropriate arguments
   Future<void> _imageMessageCallback(
-    DiscordMessageNonce messageNonce,
+    DiscordMessageWithNonce messageNonce,
     ImageMessageCallback callback,
     String nonce,
   ) async {
@@ -137,10 +143,16 @@ final class DiscordConnectionImpl implements DiscordConnection {
     // Discord message
     final msg = messageNonce.message;
 
+    // If the message is created, then:
+    // - if it has a nonce -> it is the first message,
+    //   that signifies the start of the image generation
+    // - if it has no nonce -> image generation is finished
     if (msg.created) {
       await _handleCreatedImageMessage(msg, callback, nonce);
     }
 
+    // Updated message event
+    // Nonce should be null and attachments should be present
     if (msg.updated &&
         msg.nonce == null &&
         (msg.attachments?.isNotEmpty ?? false)) {
@@ -160,9 +172,11 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   /// Handle created image message
   ///
-  /// If the message has a nonce, add it to the waiting pool and trigger an image generation started event.
+  /// If the message has a nonce, add it to the waiting pool
+  /// and trigger an image generation started event.
   ///
-  /// If the message has no nonce, remove it from the waiting pool and trigger an image generation finished event.
+  /// If the message has no nonce, remove it from the waiting
+  /// pool and trigger an image generation finished event.
   Future<void> _handleCreatedImageMessage(
     DiscordMessage msg,
     ImageMessageCallback callback,
@@ -172,7 +186,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
       // Trigger an image generation finished event
       _waitMessageCallbacks.remove(nonce);
       await callback(
-        MidjourneyMessage$ImageFinish(
+        MidjourneyMessageImageFinish(
           id: nonce,
           messageId: msg.id,
           content: msg.content,
@@ -228,7 +242,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     // Trigger an image generation started event
     await callback(
-      MidjourneyMessage$ImageProgress(
+      MidjourneyMessageImageProgress(
         progress: 0,
         id: msg.nonce!,
         messageId: msg.id,
@@ -253,7 +267,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     // Trigger an image progress event
     await callback(
-      MidjourneyMessage$ImageProgress(
+      MidjourneyMessageImageProgress(
         id: nonce,
         progress: progress ?? 0,
         messageId: msg.id,
@@ -269,14 +283,14 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// This method is called once the client is initialized.
   Future<void> _establishWebSocketConnection() async {
     await _webSocketClient.connect(config.wsUrl);
-    _webSocketClient.stream
+    _messagesSubscription = _webSocketClient.stream
         .whereType<String>()
         .map($discordMessageDecoder.convert)
         .whereType<DiscordMessage>()
         .where((event) {
           final isChannel = event.channelId == config.channelId;
           // midjourney bot id in discord
-          final isMidjourneyBot = event.author.id == '936929561302675456';
+          final isMidjourneyBot = event.author.id == Constants.midjourneyBotID;
           return isChannel && isMidjourneyBot;
         })
         .map(_associateDiscordMessageWithNonce)
@@ -287,7 +301,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// This method is called once the client is initialized.
   void _handleWebSocketStateChanges() {
-    _webSocketClient.stateChanges.listen((event) async {
+    _socketStateSubscription =
+        _webSocketClient.stateChanges.listen((event) async {
       MLogger.d('WebSocket state change: $event');
       if (event == WebsocketState.open) {
         await _authenticate();
@@ -326,7 +341,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
-  DiscordMessageNonce _associateDiscordMessageWithNonce(
+  DiscordMessageWithNonce _associateDiscordMessageWithNonce(
     DiscordMessage msg,
   ) {
     final nonce = _getNonceForMessage(msg);
@@ -334,7 +349,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Handle received Discord event
-  void _handleDiscordMessage(DiscordMessageNonce event) {
+  void _handleDiscordMessage(DiscordMessageWithNonce event) {
     MLogger.v('Discord message received: $event');
     final callback = _waitMessageCallbacks[event.nonce];
     callback?.call(event);
@@ -399,12 +414,12 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Get wait message by content
-  ({WaitMessage? waitMessage, String? id}) _getWaitMessageByContent(
+  ({WaitDiscordMessage? waitMessage, String? id}) _getWaitMessageByContent(
     String content,
   ) {
     final prompt = _content2Prompt(content);
 
-    MapEntry<String, WaitMessage>? entry;
+    MapEntry<String, WaitDiscordMessage>? entry;
 
     for (final e in _waitMessages.entries) {
       MLogger.v('Comparing $prompt with ${e.value.prompt}');
