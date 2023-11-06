@@ -2,8 +2,9 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
-## 0.4.0-alpha (2023-11-06)
+## 0.4.0 (2023-11-06)
 
+- Versions are not marked as alpha anymore
 - Refactored modules & improved docs
 
 ## 0.3.4-alpha (2023-06-30)
