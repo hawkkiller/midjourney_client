@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
+import 'package:midjourney_client/src/discord/constants/constants.dart';
 import 'package:midjourney_client/src/discord/model/interaction.dart';
 import 'package:midjourney_client/src/exception/exception.dart';
 import 'package:midjourney_client/src/midjourney/model/midjourney_config.dart';
@@ -83,7 +84,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
     final nonce = _snowflaker.nextId();
     final imaginePayload = Interaction(
       type: InteractionType.applicationCommand,
-      applicationId: '936929561302675456',
+      applicationId: Constants.midjourneyBotID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
@@ -102,7 +103,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
         ],
         applicationCommand: ApplicationCommand(
           id: '938956540159881230',
-          applicationId: '936929561302675456',
+          applicationId: Constants.midjourneyBotID,
           version: '1118961510123847772',
           type: ApplicationCommandType.chatInput,
           nsfw: false,
@@ -135,7 +136,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       messageFlags: 0,
       messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
-      applicationId: '936929561302675456',
+      applicationId: Constants.midjourneyBotID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
@@ -161,7 +162,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       messageFlags: 0,
       messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
-      applicationId: '936929561302675456',
+      applicationId: Constants.midjourneyBotID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
