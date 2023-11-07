@@ -51,7 +51,7 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
   })  : _config = config,
         _snowflaker = snowflaker ?? Snowflaker(workerId: 1, datacenterId: 1),
         _httpClient = httpClient ?? http.Client(),
-        _commandsCache = overrideCommands ?? {};
+        commandsCache = overrideCommands ?? {};
 
   final http.Client _httpClient;
   final MidjourneyConfig _config;
@@ -66,11 +66,12 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
     'Authorization': _config.token,
   };
 
-  final Map<CommandName, ApplicationCommand> _commandsCache;
+  @visibleForTesting
+  final Map<CommandName, ApplicationCommand> commandsCache;
 
   /// Retrieves a command from cache by its name.
   ApplicationCommand _getCommandByName(CommandName commandName) {
-    final command = _commandsCache[commandName];
+    final command = commandsCache[commandName];
     if (command == null) {
       throw InitializationException(message: 'Command $commandName not found');
     }
@@ -121,7 +122,7 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
     for (final commandData in commandsList) {
       final command =
           ApplicationCommand.fromJson(commandData as Map<String, Object?>);
-      _commandsCache[CommandName.fromString(command.name)] = command;
+      commandsCache[CommandName.fromString(command.name)] = command;
     }
   }
 

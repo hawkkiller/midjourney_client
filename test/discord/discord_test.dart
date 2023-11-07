@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 import 'package:midjourney_client/src/discord/discord_interaction_client.dart';
@@ -32,17 +34,27 @@ void main() {
     cdnUrl: 'empty',
   );
 
+  final applicationCommand = ApplicationCommand(
+    id: 'id',
+    applicationId: 'applicationId',
+    version: 'version',
+    type: ApplicationCommandType.chatInput,
+    nsfw: false,
+    name: 'imagine',
+    description: 'description',
+    dmPermission: true,
+    options: [
+      ApplicationCommandOption(
+        type: ApplicationCommandOptionType.string,
+        name: 'name',
+        description: 'description',
+        required: true,
+      ),
+    ],
+  );
+
   final overrideCommands = {
-    CommandName.imagine: ApplicationCommand(
-      id: 'id',
-      applicationId: 'applicationId',
-      version: 'version',
-      type: ApplicationCommandType.chatInput,
-      nsfw: false,
-      name: 'name',
-      description: 'description',
-      dmPermission: true,
-    ),
+    CommandName.imagine: applicationCommand,
   };
 
   group('Discord >', () {
@@ -54,7 +66,7 @@ void main() {
       setUp(() {
         httpClient = http_testing.MockClient(
           (request) async => http.Response(
-            '{"id": "123"}',
+            '',
             // discord interaction api returns 204 on success
             204,
           ),
@@ -213,29 +225,35 @@ void main() {
           ),
         );
       });
+      test('Fetch commands on initialize', () async {
+        final mockClient = http_testing.MockClient(
+          (request) async => http.Response(
+            jsonEncode([applicationCommand.toJson()]),
+            200,
+          ),
+        );
+
+        final discordInteractionClient = DiscordInteractionClientImpl(
+          config: emptyConfig,
+          httpClient: mockClient,
+          snowflaker: snowflaker,
+        );
+
+        await expectLater(
+          discordInteractionClient.initialize(),
+          completes,
+        );
+
+        expect(
+          discordInteractionClient.commandsCache,
+          isNotEmpty,
+        );
+      });
     });
-    group('Interaction Model >', () {
+    group('Interaction >', () {
       final snowflaker = Snowflaker(
         workerId: 10,
         datacenterId: 15,
-      );
-      final applicationCommand = ApplicationCommand(
-        id: 'id',
-        applicationId: 'applicationId',
-        version: 'version',
-        type: ApplicationCommandType.chatInput,
-        nsfw: false,
-        name: 'name',
-        description: 'description',
-        dmPermission: true,
-        options: [
-          ApplicationCommandOption(
-            type: ApplicationCommandOptionType.string,
-            name: 'name',
-            description: 'description',
-            required: true,
-          ),
-        ],
       );
       final interactionData = InteractionDataApplicationCommand(
         version: 'version',
@@ -281,32 +299,6 @@ void main() {
         expect(toJson['application_command'], applicationCommand.toJson());
       });
 
-      test('ApplicationCommand fields', () {
-        expect(applicationCommand.id, 'id');
-        expect(applicationCommand.applicationId, 'applicationId');
-        expect(applicationCommand.version, 'version');
-        expect(applicationCommand.type, ApplicationCommandType.chatInput);
-        expect(applicationCommand.nsfw, false);
-        expect(applicationCommand.name, 'name');
-        expect(applicationCommand.description, 'description');
-        expect(applicationCommand.dmPermission, true);
-        expect(applicationCommand.options, isNotEmpty);
-      });
-
-      test('ApplicationCommand toJson()', () {
-        final toJson = applicationCommand.toJson();
-
-        expect(toJson['id'], applicationCommand.id);
-        expect(toJson['application_id'], applicationCommand.applicationId);
-        expect(toJson['version'], applicationCommand.version);
-        expect(toJson['type'], applicationCommand.type.toInt());
-        expect(toJson['nsfw'], applicationCommand.nsfw);
-        expect(toJson['name'], applicationCommand.name);
-        expect(toJson['description'], applicationCommand.description);
-        expect(toJson['dm_permission'], applicationCommand.dmPermission);
-        expect(toJson['options'], isNotEmpty);
-      });
-
       test('Interaction fields', () {
         expect(interaction.sessionId, 'sessionId');
         expect(interaction.channelId, 'channelId');
@@ -327,6 +319,101 @@ void main() {
         expect(toJson['guild_id'], interaction.guildId);
         expect(toJson['channel_id'], interaction.channelId);
         expect(toJson['session_id'], interaction.sessionId);
+      });
+    });
+    group('ApplicationCommand >', () {
+      test('ApplicationCommand fields', () {
+        expect(applicationCommand.id, 'id');
+        expect(applicationCommand.applicationId, 'applicationId');
+        expect(applicationCommand.version, 'version');
+        expect(applicationCommand.type, ApplicationCommandType.chatInput);
+        expect(applicationCommand.nsfw, false);
+        expect(applicationCommand.name, 'imagine');
+        expect(applicationCommand.description, 'description');
+        expect(applicationCommand.dmPermission, true);
+        expect(applicationCommand.options, isNotEmpty);
+      });
+
+      test('ApplicationCommand toJson', () {
+        final toJson = applicationCommand.toJson();
+
+        expect(toJson['id'], applicationCommand.id);
+        expect(toJson['application_id'], applicationCommand.applicationId);
+        expect(toJson['version'], applicationCommand.version);
+        expect(toJson['type'], applicationCommand.type.toInt());
+        expect(toJson['nsfw'], applicationCommand.nsfw);
+        expect(toJson['name'], applicationCommand.name);
+        expect(toJson['description'], applicationCommand.description);
+        expect(toJson['dm_permission'], applicationCommand.dmPermission);
+        expect(toJson['options'], isNotEmpty);
+      });
+
+      test('ApplicationCommand fromJson', () {
+        final fromJson = ApplicationCommand.fromJson({
+          'id': 'id',
+          'application_id': 'applicationId',
+          'version': 'version',
+          'type': ApplicationCommandType.chatInput.toInt(),
+          'nsfw': false,
+          'name': 'name',
+          'description': 'description',
+          'dm_permission': true,
+          'options': [
+            {
+              'type': ApplicationCommandOptionType.string.toInt(),
+              'name': 'name',
+              'description': 'description',
+              'required': true,
+            },
+          ],
+        });
+
+        expect(fromJson.id, 'id');
+        expect(fromJson.applicationId, 'applicationId');
+        expect(fromJson.version, 'version');
+        expect(fromJson.type, ApplicationCommandType.chatInput);
+        expect(fromJson.nsfw, false);
+        expect(fromJson.name, 'name');
+        expect(fromJson.description, 'description');
+        expect(fromJson.dmPermission, true);
+        expect(fromJson.options, isNotEmpty);
+      });
+
+      test('ApplicationCommandOptionType toInt', () {
+        expect(ApplicationCommandOptionType.subCommand.toInt(), 1);
+        expect(ApplicationCommandOptionType.subCommandGroup.toInt(), 2);
+        expect(ApplicationCommandOptionType.string.toInt(), 3);
+        expect(ApplicationCommandOptionType.integer.toInt(), 4);
+        expect(ApplicationCommandOptionType.boolean.toInt(), 5);
+        expect(ApplicationCommandOptionType.user.toInt(), 6);
+        expect(ApplicationCommandOptionType.channel.toInt(), 7);
+        expect(ApplicationCommandOptionType.role.toInt(), 8);
+        expect(ApplicationCommandOptionType.mentionable.toInt(), 9);
+        expect(ApplicationCommandOptionType.number.toInt(), 10);
+        expect(ApplicationCommandOptionType.attachment.toInt(), 11);
+      });
+
+      test('ApplicationCommandType toInt', () {
+        expect(ApplicationCommandType.chatInput.toInt(), 1);
+        expect(ApplicationCommandType.user.toInt(), 2);
+        expect(ApplicationCommandType.message.toInt(), 3);
+      });
+
+      test('CommandName fromString', () {
+        expect(CommandName.imagine, CommandName.fromString('imagine'));
+      });
+
+      test('Command Throws', () {
+        expect(
+          () => CommandName.fromString('invalid'),
+          throwsA(
+            isA<ArgumentError>().having(
+              (e) => e.name,
+              'name',
+              'name',
+            ),
+          ),
+        );
       });
     });
   });
