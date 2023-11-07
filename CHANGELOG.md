@@ -2,6 +2,12 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.4.1 (2023-11-07)
+
+- Added more tests
+- Refactored inner structure & code & comments
+- Now commands are fetched during initialization
+
 ## 0.4.0 (2023-11-06)
 
 - Versions are not marked as alpha anymore
