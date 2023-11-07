@@ -70,7 +70,8 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
   final Map<CommandName, ApplicationCommand> commandsCache;
 
   /// Retrieves a command from cache by its name.
-  ApplicationCommand _getCommandByName(CommandName commandName) {
+  @visibleForTesting
+  ApplicationCommand getCommandByName(CommandName commandName) {
     final command = commandsCache[commandName];
     if (command == null) {
       throw InitializationException(message: 'Command $commandName not found');
@@ -129,7 +130,7 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
   @override
   Future<int> createImagine(String prompt) async {
     final nonce = _snowflaker.nextId();
-    final command = _getCommandByName(CommandName.imagine);
+    final command = getCommandByName(CommandName.imagine);
     final interaction = _createImagineInteraction(prompt, command);
     await _rateLimitedInteraction(interaction);
     return nonce;

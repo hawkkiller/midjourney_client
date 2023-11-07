@@ -60,7 +60,7 @@ void main() {
   group('Discord >', () {
     group('Interaction Client >', () {
       late http.Client httpClient;
-      late DiscordInteractionClient discordInteractionClient;
+      late DiscordInteractionClientImpl discordInteractionClient;
       late Snowflaker snowflaker;
 
       setUp(() {
@@ -247,6 +247,24 @@ void main() {
         expect(
           discordInteractionClient.commandsCache,
           isNotEmpty,
+        );
+      });
+      test('Initialize fails on wrong response', () {
+        expectLater(
+          discordInteractionClient.initialize(),
+          throwsA(isA<InitializationException>()),
+        );
+      });
+      test('GetCommandByName fails if commands are empty', () {
+        discordInteractionClient = DiscordInteractionClientImpl(
+          config: emptyConfig,
+          httpClient: httpClient,
+          snowflaker: snowflaker,
+        );
+
+        expect(
+          () => discordInteractionClient.getCommandByName(CommandName.imagine),
+          throwsA(isA<InitializationException>()),
         );
       });
     });
