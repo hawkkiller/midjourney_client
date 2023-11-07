@@ -303,5 +303,10 @@ enum CommandName {
 
   const CommandName(this.name);
 
+  static CommandName fromString(String name) => switch (name) {
+        'imagine' => CommandName.imagine,
+        _ => throw ArgumentError.value(name, 'name', 'Invalid value'),
+      };
+
   final String name;
 }

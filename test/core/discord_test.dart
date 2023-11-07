@@ -31,8 +31,21 @@ void main() {
     channelId: 'empty',
     cdnUrl: 'empty',
   );
+
+  final overrideCommands = {
+    CommandName.imagine: ApplicationCommand(
+      id: 'id',
+      applicationId: 'applicationId',
+      version: 'version',
+      type: ApplicationCommandType.chatInput,
+      nsfw: false,
+      name: 'name',
+      description: 'description',
+      dmPermission: true,
+    ),
+  };
+
   group('Discord >', () {
-    group('', () => null);
     group('Interaction Client >', () {
       late http.Client httpClient;
       late DiscordInteractionClient discordInteractionClient;
@@ -51,6 +64,7 @@ void main() {
           config: emptyConfig,
           httpClient: httpClient,
           snowflaker: snowflaker,
+          overrideCommands: overrideCommands,
         );
       });
 
@@ -111,6 +125,7 @@ void main() {
           config: emptyConfig,
           httpClient: httpClient,
           snowflaker: snowflaker,
+          overrideCommands: overrideCommands,
         );
 
         expect(
@@ -137,6 +152,7 @@ void main() {
           config: emptyConfig,
           httpClient: httpClient,
           snowflaker: snowflaker,
+          overrideCommands: overrideCommands,
         );
 
         final response = discordInteractionClient.createVariation(
@@ -173,6 +189,7 @@ void main() {
           config: emptyConfig,
           httpClient: httpClient,
           snowflaker: snowflaker,
+          overrideCommands: overrideCommands,
         );
 
         final response = discordInteractionClient.createUpscale(

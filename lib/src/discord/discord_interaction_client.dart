@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 import 'package:midjourney_client/src/discord/constants/constants.dart';
 import 'package:midjourney_client/src/discord/model/interaction.dart';
 import 'package:midjourney_client/src/exception/exception.dart';
@@ -18,9 +19,25 @@ typedef ImageMessageCallback = FutureOr<void> Function(
 
 /// Defines the interface for interacting with Discord's interaction API.
 abstract class DiscordInteractionClient {
+  /// Initializes the client
+  ///
+  /// Fetches the list of commands from Discord.
+  /// This is required to be called before any other method.
   Future<void> initialize();
+
+  /// Creates a new imagine job.
+  ///
+  /// Returns the nonce of the interaction.
   Future<int> createImagine(String prompt);
+
+  /// Creates a new variation job.
+  ///
+  /// Returns the nonce of the interaction.
   Future<int> createVariation(MidjourneyMessageImage imageMessage, int index);
+
+  /// Creates a new upscale job.
+  ///
+  /// Returns the nonce of the interaction.
   Future<int> createUpscale(MidjourneyMessageImage imageMessage, int index);
 }
 
@@ -30,23 +47,29 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
     required MidjourneyConfig config,
     Snowflaker? snowflaker,
     http.Client? httpClient,
+    @visibleForTesting Map<CommandName, ApplicationCommand>? overrideCommands,
   })  : _config = config,
         _snowflaker = snowflaker ?? Snowflaker(workerId: 1, datacenterId: 1),
-        _httpClient = httpClient ?? http.Client();
+        _httpClient = httpClient ?? http.Client(),
+        _commandsCache = overrideCommands ?? {};
 
   final http.Client _httpClient;
   final MidjourneyConfig _config;
   final Snowflaker _snowflaker;
-  final RateLimiter _rateLimiter =
-      RateLimiter(limit: 1, period: const Duration(seconds: 2));
+
+  final RateLimiter _rateLimiter = RateLimiter(
+    limit: 1,
+    period: const Duration(seconds: 2),
+  );
   late final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Authorization': _config.token,
   };
-  final Map<String, ApplicationCommand> _commandsCache = {};
+
+  final Map<CommandName, ApplicationCommand> _commandsCache;
 
   /// Retrieves a command from cache by its name.
-  ApplicationCommand _getCommandByName(String commandName) {
+  ApplicationCommand _getCommandByName(CommandName commandName) {
     final command = _commandsCache[commandName];
     if (command == null) {
       throw InitializationException(message: 'Command $commandName not found');
@@ -98,14 +121,14 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
     for (final commandData in commandsList) {
       final command =
           ApplicationCommand.fromJson(commandData as Map<String, Object?>);
-      _commandsCache[command.name] = command;
+      _commandsCache[CommandName.fromString(command.name)] = command;
     }
   }
 
   @override
   Future<int> createImagine(String prompt) async {
     final nonce = _snowflaker.nextId();
-    final command = _getCommandByName('imagine');
+    final command = _getCommandByName(CommandName.imagine);
     final interaction = _createImagineInteraction(prompt, command);
     await _rateLimitedInteraction(interaction);
     return nonce;
