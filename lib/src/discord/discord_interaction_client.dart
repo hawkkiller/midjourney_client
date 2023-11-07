@@ -18,6 +18,9 @@ typedef ImageMessageCallback = FutureOr<void> Function(
 );
 
 abstract interface class DiscordInteractionClient {
+  /// Initialize the client.
+  Future<void> initialize();
+
   /// Imagine a new picture with the given [prompt].
   Future<int> imagine(String prompt);
 
@@ -38,12 +41,35 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
         _client = client ?? http.Client();
 
   final http.Client _client;
+
   final MidjourneyConfig _config;
+
   final Snowflaker _snowflaker;
+
   final _rateLimiter = RateLimiter(
     limit: 1,
     period: const Duration(seconds: 2),
   );
+
+  late final _headers = {
+    'Content-Type': 'application/json',
+    'Authorization': _config.token,
+  };
+
+  final _commandsCache = <String, ApplicationCommand>{};
+
+  /// Returns command from cache by name.
+  ApplicationCommand _getCommandForName(CommandName commandName) {
+    final command = _commandsCache[commandName.name];
+
+    if (command == null) {
+      throw InitializationException(
+        message: 'Command $commandName not found',
+      );
+    }
+
+    return command;
+  }
 
   Future<void> _rateLimitedInteractions(
     Map<String, Object?> body,
@@ -54,17 +80,12 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
 
   /// Execute a Discord interaction.
   Future<void> _interactions(Map<String, Object?> body) async {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': _config.token,
-    };
-
     MLogger.d('Sending interaction: $body');
 
     final response = await _client.post(
       Uri.parse('${_config.baseUrl}/api/v10/interactions'),
       body: jsonEncode(body),
-      headers: headers,
+      headers: _headers,
     );
 
     if (response.statusCode != 204) {
@@ -80,19 +101,49 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
+  Future<void> initialize() async {
+    final response = await _client.get(
+      Uri.parse(
+        '${_config.baseUrl}/api/v10/applications/${Constants.botID}/commands',
+      ),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw InitializationException(
+        code: response.statusCode,
+        message: response.body,
+      );
+    }
+
+    final commands = jsonDecode(response.body) as List<Object?>;
+
+    final appCommands = commands
+        .map((e) => ApplicationCommand.fromJson(e! as Map<String, Object?>))
+        .toList();
+
+    for (final command in appCommands) {
+      _commandsCache[command.name] = command;
+    }
+  }
+
+  @override
   Future<int> imagine(String prompt) async {
     final nonce = _snowflaker.nextId();
+
+    final command = _getCommandForName(CommandName.imagine);
+
     final imaginePayload = Interaction(
       type: InteractionType.applicationCommand,
-      applicationId: Constants.midjourneyBotID,
+      applicationId: command.applicationId,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
       data: InteractionDataApplicationCommand(
-        version: '1118961510123847772',
-        id: '938956540159881230',
-        name: 'imagine',
+        version: command.version,
+        id: command.id,
+        name: command.name,
         type: ApplicationCommandType.chatInput,
         options: [
           InteractionDataOption(
@@ -101,24 +152,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
             value: prompt,
           ),
         ],
-        applicationCommand: ApplicationCommand(
-          id: '938956540159881230',
-          applicationId: Constants.midjourneyBotID,
-          version: '1118961510123847772',
-          type: ApplicationCommandType.chatInput,
-          nsfw: false,
-          name: 'imagine',
-          description: 'Create images with Midjourney',
-          dmPermission: true,
-          options: [
-            ApplicationCommandOption(
-              type: ApplicationCommandOptionType.string,
-              name: 'prompt',
-              description: 'The prompt to imagine',
-              required: true,
-            ),
-          ],
-        ),
+        applicationCommand: command,
       ),
     );
 
@@ -132,11 +166,12 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
   Future<int> variation(MidjourneyMessageImage imageMessage, int index) async {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
+    
     final variationPayload = Interaction(
       messageFlags: 0,
       messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
-      applicationId: Constants.midjourneyBotID,
+      applicationId: Constants.botID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
@@ -162,7 +197,7 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       messageFlags: 0,
       messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
-      applicationId: Constants.midjourneyBotID,
+      applicationId: Constants.botID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,

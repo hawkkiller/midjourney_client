@@ -97,7 +97,12 @@ final class MidjourneyApiDiscordImpl implements MidjourneyApi {
   }
 
   @override
-  Future<void> initialize() => connection.initialize();
+  Future<void> initialize() async {
+    await interactionClient.initialize();
+    await connection.initialize();
+
+    return;
+  }
 
   @override
   Future<void> close() => connection.close();

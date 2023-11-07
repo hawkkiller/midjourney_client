@@ -118,6 +118,30 @@ class ApplicationCommand {
     this.contexts,
   });
 
+  factory ApplicationCommand.fromJson(Map<String, Object?> json) {
+    final options = json['options'] as List<Object?>?;
+    final contexts = json['contexts'] as List<Object?>?;
+
+    return ApplicationCommand(
+      id: json['id']! as String,
+      applicationId: json['application_id']! as String,
+      version: json['version']! as String,
+      defaultMemberPermissions: json['default_member_permissions'] as String?,
+      type: ApplicationCommandType.fromInt(json['type']! as int),
+      nsfw: json['nsfw']! as bool,
+      name: json['name']! as String,
+      description: json['description']! as String,
+      dmPermission: json['dm_permission']! as bool,
+      contexts: contexts,
+      options: options
+          ?.map(
+            (e) =>
+                ApplicationCommandOption.fromJson(e! as Map<String, Object?>),
+          )
+          .toList(),
+    );
+  }
+
   final String id;
   final String applicationId;
   final String version;
@@ -152,6 +176,14 @@ class ApplicationCommandOption {
     required this.description,
     this.required,
   });
+
+  factory ApplicationCommandOption.fromJson(Map<String, Object?> json) =>
+      ApplicationCommandOption(
+        type: ApplicationCommandOptionType.fromInt(json['type']! as int),
+        name: json['name']! as String,
+        description: json['description']! as String,
+        required: json['required'] as bool?,
+      );
 
   final ApplicationCommandOptionType type;
   final String name;
@@ -209,6 +241,13 @@ enum ApplicationCommandType {
   user,
   message;
 
+  static ApplicationCommandType fromInt(int value) => switch (value) {
+        1 => ApplicationCommandType.chatInput,
+        2 => ApplicationCommandType.user,
+        3 => ApplicationCommandType.message,
+        _ => throw ArgumentError.value(value, 'value', 'Invalid value'),
+      };
+
   int toInt() => switch (this) {
         ApplicationCommandType.chatInput => 1,
         ApplicationCommandType.user => 2,
@@ -229,6 +268,21 @@ enum ApplicationCommandOptionType {
   number,
   attachment;
 
+  static ApplicationCommandOptionType fromInt(int value) => switch (value) {
+        1 => ApplicationCommandOptionType.subCommand,
+        2 => ApplicationCommandOptionType.subCommandGroup,
+        3 => ApplicationCommandOptionType.string,
+        4 => ApplicationCommandOptionType.integer,
+        5 => ApplicationCommandOptionType.boolean,
+        6 => ApplicationCommandOptionType.user,
+        7 => ApplicationCommandOptionType.channel,
+        8 => ApplicationCommandOptionType.role,
+        9 => ApplicationCommandOptionType.mentionable,
+        10 => ApplicationCommandOptionType.number,
+        11 => ApplicationCommandOptionType.attachment,
+        _ => throw ArgumentError.value(value, 'value', 'Invalid value'),
+      };
+
   int toInt() => switch (this) {
         ApplicationCommandOptionType.subCommand => 1,
         ApplicationCommandOptionType.subCommandGroup => 2,
@@ -242,4 +296,12 @@ enum ApplicationCommandOptionType {
         ApplicationCommandOptionType.number => 10,
         ApplicationCommandOptionType.attachment => 11,
       };
+}
+
+enum CommandName {
+  imagine('imagine');
+
+  const CommandName(this.name);
+
+  final String name;
 }
