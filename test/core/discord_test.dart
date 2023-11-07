@@ -49,7 +49,7 @@ void main() {
         snowflaker = _SnowflakerMock();
         discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          client: httpClient,
+          httpClient: httpClient,
           snowflaker: snowflaker,
         );
       });
@@ -60,13 +60,13 @@ void main() {
 
       test('Imagine should work correctly with 204', () {
         expect(
-          discordInteractionClient.imagine('prompt'),
+          discordInteractionClient.createImagine('prompt'),
           completion(123),
         );
       });
 
       test('Variation should work correctly with 204', () {
-        final response = discordInteractionClient.variation(
+        final response = discordInteractionClient.createVariation(
           const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
@@ -83,7 +83,7 @@ void main() {
       });
 
       test('Upscale should work correctly with 204', () {
-        final response = discordInteractionClient.upscale(
+        final response = discordInteractionClient.createUpscale(
           const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
@@ -109,12 +109,12 @@ void main() {
         );
         discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          client: httpClient,
+          httpClient: httpClient,
           snowflaker: snowflaker,
         );
 
         expect(
-          discordInteractionClient.imagine('prompt'),
+          discordInteractionClient.createImagine('prompt'),
           throwsA(
             isA<InteractionException>().having(
               (e) => e.code,
@@ -135,11 +135,11 @@ void main() {
         );
         discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          client: httpClient,
+          httpClient: httpClient,
           snowflaker: snowflaker,
         );
 
-        final response = discordInteractionClient.variation(
+        final response = discordInteractionClient.createVariation(
           const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
@@ -171,11 +171,11 @@ void main() {
         );
         discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          client: httpClient,
+          httpClient: httpClient,
           snowflaker: snowflaker,
         );
 
-        final response = discordInteractionClient.upscale(
+        final response = discordInteractionClient.createUpscale(
           const MidjourneyMessageImageFinish(
             id: 'id',
             content: '',
