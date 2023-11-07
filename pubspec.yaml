@@ -12,7 +12,7 @@ dependencies:
   snowflaker: ^1.1.0
   http: ^1.0.0
   meta: ^1.9.1
-  ws: ^0.0.7-dev
+  ws: ^0.1.2
   path: ^1.8.1
 
 dev_dependencies:
