@@ -82,12 +82,15 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
   @override
   Future<void> initialize() async {
     final uri = Uri.parse(
-        '${_config.baseUrl}/api/v10/applications/${Constants.botID}/commands');
+      '${_config.baseUrl}/api/v10/applications/${Constants.botID}/commands',
+    );
     final response = await _httpClient.get(uri, headers: _headers);
 
     if (response.statusCode != 200) {
       throw InitializationException(
-          code: response.statusCode, message: response.body);
+        code: response.statusCode,
+        message: response.body,
+      );
     }
 
     final commandsList =
