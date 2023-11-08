@@ -7,6 +7,7 @@ Format - `## {version} (YYYY-MM-DD)`
 - Added more tests
 - Refactored inner structure & code & comments
 - Now commands are fetched during initialization
+- Refactored Logger
 
 ## 0.4.0 (2023-11-06)
 
