@@ -87,7 +87,7 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
   /// Sends an interaction to the Discord API.
   Future<void> _sendInteraction(Interaction interaction) async {
     final body = interaction.toJson();
-    MLogger.d('Sending interaction: $body');
+    MLogger.instance.d('Sending interaction: $body');
     final uri = Uri.parse('${_config.baseUrl}/api/v10/interactions');
     final response = await _httpClient.post(
       uri,
@@ -101,7 +101,7 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
         message: response.body,
       );
     }
-    MLogger.d('Interaction sent successfully');
+    MLogger.instance.d('Interaction sent successfully');
   }
 
   @override

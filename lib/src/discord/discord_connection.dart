@@ -212,7 +212,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
       }
 
       if (embed.color == 16776960) {
-        MLogger.w('Discord warning: ${embed.description}');
+        MLogger.instance.w('Discord warning: ${embed.description}');
       }
 
       final title = embed.title;
@@ -290,7 +290,14 @@ final class DiscordConnectionImpl implements DiscordConnection {
         .where((event) {
           final isChannel = event.channelId == config.channelId;
           // midjourney bot id in discord
-          final isMidjourneyBot = event.author.id == Constants.botID;
+          final isMidjourneyBot = event.author?.id == Constants.botID;
+
+          final show = isChannel && isMidjourneyBot;
+
+          if (!show) {
+            return false;
+          }
+
           return isChannel && isMidjourneyBot;
         })
         .map(_associateDiscordMessageWithNonce)
@@ -303,7 +310,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   void _handleWebSocketStateChanges() {
     _socketStateSubscription =
         _webSocketClient.stateChanges.listen((event) async {
-      MLogger.d('WebSocket state change: $event');
+      MLogger.instance.d('WebSocket state change: $event');
       if (event == WebsocketState.open) {
         await _authenticate();
         _initiatePeriodicHeartbeat();
@@ -317,7 +324,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _authenticate() async {
     final authJson = DiscordWsAuth(config.token).toJson();
     await _webSocketClient.add(jsonEncode(authJson));
-    MLogger.d('Auth sent $authJson');
+    MLogger.instance.d('Auth sent $authJson');
   }
 
   /// Initiate periodic heartbeat to maintain connection
@@ -337,7 +344,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _sendHeartbeat(int seq) async {
     final heartbeatJson = DiscordWsHeartbeat(seq).toJson();
     await _webSocketClient.add(jsonEncode(heartbeatJson));
-    MLogger.d('Heartbeat sent $heartbeatJson');
+    MLogger.instance.d('Heartbeat sent $heartbeatJson');
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
@@ -350,7 +357,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   /// Handle received Discord event
   void _handleDiscordMessage(DiscordMessageWithNonce event) {
-    MLogger.v('Discord message received: $event');
+    MLogger.instance.v('Discord message received: $event');
     final callback = _waitMessageCallbacks[event.nonce];
     callback?.call(event);
   }
@@ -365,7 +372,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// Get nonce for created message
   String? _getNonceForCreatedMessage(DiscordMessage msg) {
     if (msg.nonce != null) {
-      MLogger.d('Created message: ${msg.id}');
+      MLogger.instance.d('Created message: ${msg.id}');
       return msg.nonce;
     }
 
@@ -375,7 +382,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
     if (waitMessage != null) {
       final nonce = waitMessage.nonce;
-      MLogger.v('Associated ${msg.id} with nonce $nonce');
+      MLogger.instance.v('Associated ${msg.id} with nonce $nonce');
       return nonce;
     }
     return null;
@@ -386,7 +393,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     final waitMessage = _waitMessages[msg.id];
     if (waitMessage == null) return null;
     final nonce = waitMessage.nonce;
-    MLogger.v('Updated message: ${msg.id} with nonce $nonce');
+    MLogger.instance.v('Updated message: ${msg.id} with nonce $nonce');
 
     if (waitMessage.prompt.isEmpty) {
       // handle overloaded case when first created was without content
@@ -408,7 +415,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     if (matches.isNotEmpty && matches.first.groupCount >= 1) {
       return matches.first.group(1) ?? '';
     } else {
-      MLogger.w('Failed to parse prompt from content: $content');
+      MLogger.instance.w('Failed to parse prompt from content: $content');
       return content;
     }
   }
@@ -422,7 +429,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     MapEntry<String, WaitDiscordMessage>? entry;
 
     for (final e in _waitMessages.entries) {
-      MLogger.v('Comparing $prompt with ${e.value.prompt}');
+      MLogger.instance.v('Comparing $prompt with ${e.value.prompt}');
       if (e.value.prompt == prompt) {
         entry = e;
         break;

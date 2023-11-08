@@ -28,8 +28,8 @@ sealed class DiscordMessage extends DiscordEvent {
     required this.id,
     required this.content,
     required this.embeds,
-    required this.author,
     required this.channelId,
+    this.author,
     this.nonce,
     this.attachments,
   });
@@ -37,7 +37,7 @@ sealed class DiscordMessage extends DiscordEvent {
   final String content;
   final String id;
   final List<Embed> embeds;
-  final Author author;
+  final Author? author;
   final String? nonce;
   final List<Attachment>? attachments;
   final String channelId;
@@ -68,8 +68,8 @@ final class DiscordMessageCreate extends DiscordMessage {
     required super.id,
     required super.content,
     required super.embeds,
-    required super.author,
     required super.channelId,
+    super.author,
     super.nonce,
     super.attachments,
   });
@@ -79,7 +79,9 @@ final class DiscordMessageCreate extends DiscordMessage {
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
         content: json['content']! as String,
-        author: Author.fromJson(json['author']! as Map<String, Object?>),
+        author: json['author'] != null
+            ? Author.fromJson(json['author']! as Map<String, Object?>)
+            : null,
         attachments: (json['attachments'] as List<Object?>?)
             ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
             .toList(),
@@ -95,8 +97,8 @@ final class DiscordMessageUpdate extends DiscordMessage {
     required super.id,
     required super.embeds,
     required super.content,
-    required super.author,
     required super.channelId,
+    super.author,
     super.attachments,
     super.nonce,
   });
@@ -106,7 +108,9 @@ final class DiscordMessageUpdate extends DiscordMessage {
         nonce: json['nonce'] as String?,
         id: json['id']! as String,
         content: json['content'] as String? ?? '',
-        author: Author.fromJson(json['author']! as Map<String, Object?>),
+        author: json['author'] != null
+            ? Author.fromJson(json['author']! as Map<String, Object?>)
+            : null,
         attachments: (json['attachments'] as List<Object?>?)
             ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
             .toList(),
@@ -191,8 +195,8 @@ final class Author {
     required this.username,
     required this.discriminator,
     required this.id,
-    required this.avatar,
-    required this.bot,
+    this.avatar,
+    this.bot,
   });
 
   factory Author.fromJson(Map<String, Object?> json) => Author(
@@ -200,7 +204,7 @@ final class Author {
         discriminator: json['discriminator']! as String,
         id: json['id']! as String,
         bot: json['bot'] as bool?,
-        avatar: json['avatar']! as String?,
+        avatar: json['avatar'] as String?,
       );
 
   final String username;
