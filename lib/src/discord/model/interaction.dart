@@ -299,13 +299,14 @@ enum ApplicationCommandOptionType {
 }
 
 enum CommandName {
+  unknown('unknwown'),
   imagine('imagine');
 
   const CommandName(this.name);
 
   static CommandName fromString(String name) => switch (name) {
         'imagine' => CommandName.imagine,
-        _ => throw ArgumentError.value(name, 'name', 'Invalid value'),
+        _ => CommandName.unknown,
       };
 
   final String name;
