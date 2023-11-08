@@ -422,16 +422,7 @@ void main() {
       });
 
       test('Command Throws', () {
-        expect(
-          () => CommandName.fromString('invalid'),
-          throwsA(
-            isA<ArgumentError>().having(
-              (e) => e.name,
-              'name',
-              'name',
-            ),
-          ),
-        );
+        expect(CommandName.unknown, CommandName.fromString('invalid'));
       });
     });
   });
