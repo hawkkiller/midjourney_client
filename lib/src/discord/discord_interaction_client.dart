@@ -12,7 +12,7 @@ import 'package:midjourney_client/src/utils/logger.dart';
 import 'package:midjourney_client/src/utils/rate_limiter.dart';
 import 'package:snowflaker/snowflaker.dart';
 
-typedef ImageMessageCallback = FutureOr<void> Function(
+typedef ImageProgressNotifyCallback = FutureOr<void> Function(
   MidjourneyMessageImage? imageMessage,
   Exception? error,
 );
@@ -28,17 +28,20 @@ abstract class DiscordInteractionClient {
   /// Creates a new imagine job.
   ///
   /// Returns the nonce of the interaction.
-  Future<int> createImagine(String prompt);
+  Future<String> createImagine(String prompt);
 
   /// Creates a new variation job.
   ///
   /// Returns the nonce of the interaction.
-  Future<int> createVariation(MidjourneyMessageImage imageMessage, int index);
+  Future<String> createVariation(
+    MidjourneyMessageImage imageMessage,
+    int index,
+  );
 
   /// Creates a new upscale job.
   ///
   /// Returns the nonce of the interaction.
-  Future<int> createUpscale(MidjourneyMessageImage imageMessage, int index);
+  Future<String> createUpscale(MidjourneyMessageImage imageMessage, int index);
 }
 
 /// Implementation of the Discord interaction service.
@@ -128,40 +131,38 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
   }
 
   @override
-  Future<int> createImagine(String prompt) async {
-    final nonce = _snowflaker.nextId();
+  Future<String> createImagine(String prompt) async {
     final command = getCommandByName(CommandName.imagine);
     final interaction = _createImagineInteraction(prompt, command);
     await _rateLimitedInteraction(interaction);
-    return nonce;
+
+    return interaction.nonce;
   }
 
   @override
-  Future<int> createVariation(
+  Future<String> createVariation(
     MidjourneyMessageImage imageMessage,
     int index,
   ) async {
-    final nonce = _snowflaker.nextId();
     final interaction = _createVariationInteraction(
       imageMessage: imageMessage,
       index: index,
     );
     await _rateLimitedInteraction(interaction);
-    return nonce;
+    return interaction.nonce;
   }
 
   @override
-  Future<int> createUpscale(
+  Future<String> createUpscale(
     MidjourneyMessageImage imageMessage,
     int index,
   ) async {
-    final nonce = _snowflaker.nextId();
     final interaction = _createUpscaleInteraction(
       imageMessage: imageMessage,
       index: index,
     );
     await _rateLimitedInteraction(interaction);
-    return nonce;
+    return interaction.nonce;
   }
 
   /// Helper method to create imagine interaction.

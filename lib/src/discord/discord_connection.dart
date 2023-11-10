@@ -31,7 +31,7 @@ typedef WaitDiscordMessage = ({String nonce, String prompt});
 /// This is used to communicate with Discord.
 abstract interface class DiscordConnection {
   /// Wait for a message with the given [nonce].
-  Stream<MidjourneyMessageImage> waitImageMessage(int nonce);
+  Stream<MidjourneyMessageImage> waitImageMessage(String nonce);
 
   /// Initialize the connection.
   Future<void> initialize();
@@ -89,13 +89,13 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// It registers a callback function that adds new messages to the stream or, in case of an error,
   /// adds the error to the stream and then closes it.
   @override
-  Stream<MidjourneyMessageImage> waitImageMessage(int nonce) async* {
+  Stream<MidjourneyMessageImage> waitImageMessage(String nonce) async* {
     final controller = StreamController<MidjourneyMessageImage>.broadcast(
       sync: true,
     );
 
-    _registerImageMessageCallback(
-      nonce.toString(),
+    _registerImageMessageNotifyCallback(
+      nonce,
       (msg, e) async {
         if (e != null) {
           // In case of error, add error to the stream and close it
@@ -120,22 +120,23 @@ final class DiscordConnectionImpl implements DiscordConnection {
     yield* controller.stream;
   }
 
-  /// Register a callback to be invoked once an image message with a specific nonce is received
-  void _registerImageMessageCallback(
+  /// Register a callback to be invoked once an
+  /// image message with a specific nonce is received
+  void _registerImageMessageNotifyCallback(
     String nonce,
-    ImageMessageCallback callback,
+    ImageProgressNotifyCallback notify,
   ) {
     _waitMessageCallbacks[nonce] = (discordMsg) async {
-      await _imageMessageCallback(discordMsg, callback, nonce);
+      await _imageMessageNotifyCallback(discordMsg, notify, nonce);
     };
   }
 
   /// Process the image message callback
   /// If the nonce of the incoming message matches the expected nonce,
   /// handle the message according to its state and invoke the callback with appropriate arguments
-  Future<void> _imageMessageCallback(
+  Future<void> _imageMessageNotifyCallback(
     DiscordMessageWithNonce messageNonce,
-    ImageMessageCallback callback,
+    ImageProgressNotifyCallback callback,
     String nonce,
   ) async {
     if (messageNonce.nonce != nonce) return;
@@ -161,7 +162,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   Future<void> _imageMessageError({
-    required ImageMessageCallback callback,
+    required ImageProgressNotifyCallback callback,
     required String error,
     required String nonce,
   }) async {
@@ -179,7 +180,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// pool and trigger an image generation finished event.
   Future<void> _handleCreatedImageMessage(
     DiscordMessage msg,
-    ImageMessageCallback callback,
+    ImageProgressNotifyCallback callback,
     String nonce,
   ) async {
     if (msg.nonce == null) {
@@ -194,6 +195,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
         ),
         null,
       );
+      MLogger.instance.d('Triggered image generation finished event');
       return;
     }
     String? reason;
@@ -208,6 +210,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
           error: embed.description!,
           nonce: nonce,
         );
+        MLogger.instance.e('Discord error: ${embed.description}');
         return;
       }
 
@@ -230,6 +233,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
           error: embed.description!,
           nonce: nonce,
         );
+        MLogger.instance.e('Discord error: ${embed.description}');
         return;
       } else if (title.contains('Job queued')) {
         reason = '$title\n$description';
@@ -239,6 +243,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
       nonce: msg.nonce!,
       prompt: _content2Prompt(msg.content),
     );
+    MLogger.instance.d('Added ${msg.id} to wait messages');
 
     // Trigger an image generation started event
     await callback(
@@ -250,6 +255,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
       ),
       null,
     );
+    MLogger.instance.d('Triggered image generation started event');
     return;
   }
 
@@ -258,7 +264,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// Trigger an image progress event.
   Future<void> _handleUpdatedImageMessage(
     DiscordMessage msg,
-    ImageMessageCallback callback,
+    ImageProgressNotifyCallback callback,
     String nonce,
   ) async {
     final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content);
@@ -294,9 +300,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
           final show = isChannel && isMidjourneyBot;
 
-          if (!show) {
-            return false;
-          }
+          if (!show) return false;
 
           return isChannel && isMidjourneyBot;
         })
@@ -324,7 +328,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _authenticate() async {
     final authJson = DiscordWsAuth(config.token).toJson();
     await _webSocketClient.add(jsonEncode(authJson));
-    MLogger.instance.d('Auth sent $authJson');
+    MLogger.instance.v('Auth sent $authJson');
   }
 
   /// Initiate periodic heartbeat to maintain connection
@@ -344,7 +348,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
   Future<void> _sendHeartbeat(int seq) async {
     final heartbeatJson = DiscordWsHeartbeat(seq).toJson();
     await _webSocketClient.add(jsonEncode(heartbeatJson));
-    MLogger.instance.d('Heartbeat sent $heartbeatJson');
+    MLogger.instance.v('Heartbeat sent $heartbeatJson');
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
@@ -362,10 +366,11 @@ final class DiscordConnectionImpl implements DiscordConnection {
     callback?.call(event);
   }
 
-  /// Retrieve nonce associated with a message
+  /// Get nonce associated with a message
   String? _getNonceForMessage(DiscordMessage msg) {
     if (msg.created) return _getNonceForCreatedMessage(msg);
     if (msg.updated) return _getNonceForUpdatedMessage(msg);
+
     return null;
   }
 
@@ -390,8 +395,16 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   /// Get nonce for updated message
   String? _getNonceForUpdatedMessage(DiscordMessage msg) {
+    MLogger.instance.v('Trying to find nonce for updated message: ${msg.id}');
     final waitMessage = _waitMessages[msg.id];
-    if (waitMessage == null) return null;
+    if (waitMessage == null) {
+      MLogger.instance.v('Wait messages: $_waitMessages');
+      MLogger.instance.v('Wait message callbacks: $_waitMessageCallbacks');
+      MLogger.instance.d('No wait message found for ${msg.id}, returning');
+
+      return null;
+    }
+
     final nonce = waitMessage.nonce;
     MLogger.instance.v('Updated message: ${msg.id} with nonce $nonce');
 

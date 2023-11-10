@@ -17,7 +17,7 @@ Future<void> main(List<Object> arguments) async {
     logLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
-  final imagine = client.imagine('Elephant on a tree').asBroadcastStream()
+  final imagine = client.imagine('Red rose').asBroadcastStream()
     ..listen(print);
 
   final imagineResult = await imagine.finished;
