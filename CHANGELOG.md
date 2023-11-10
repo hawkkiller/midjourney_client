@@ -9,6 +9,10 @@ Format - `## {version} (YYYY-MM-DD)`
 - Now commands are fetched during initialization
 - Refactored Logger
 
+## 0.4.1-pre.3 (2023-11-10)
+
+- Fixed incorrect nonce and association failure
+
 ## 0.4.0 (2023-11-06)
 
 - Versions are not marked as alpha anymore
