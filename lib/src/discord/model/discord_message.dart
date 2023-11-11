@@ -2,123 +2,111 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 
+/// The type of a [DiscordMessage].
+enum DiscordMessageType {
+  create,
+  update,
+  delete,
+  unsupported;
+
+  /// Contstruct a [DiscordMessageType] from a string.
+  static DiscordMessageType fromString(String value) => switch (value) {
+        'MESSAGE_CREATE' => DiscordMessageType.create,
+        'MESSAGE_UPDATE' => DiscordMessageType.update,
+        'MESSAGE_DELETE' => DiscordMessageType.delete,
+        _ => DiscordMessageType.unsupported,
+      };
+}
+
 @immutable
 sealed class DiscordEvent {
   const DiscordEvent();
 }
 
-final class DiscordEventUnsupported extends DiscordEvent {
-  const DiscordEventUnsupported({
-    required this.type,
-    required this.data,
-  });
-
-  final String type;
-  final Map<String, Object?> data;
-
-  @override
-  String toString() => '$type('
-      'type: $type, '
-      'data: $data'
-      ')';
-}
-
-sealed class DiscordMessage extends DiscordEvent {
+base class DiscordMessage extends DiscordEvent {
   const DiscordMessage({
-    required this.id,
-    required this.content,
-    required this.embeds,
-    required this.channelId,
+    required this.type,
+    this.id,
+    this.channelId,
+    this.guildId,
+    this.embeds,
+    this.content,
     this.author,
     this.nonce,
     this.attachments,
   });
 
-  final String content;
-  final String id;
-  final List<Embed> embeds;
+  /// Construct a [DiscordMessage] from a JSON map.
+  factory DiscordMessage.fromJson(
+    Map<String, Object?> json,
+    DiscordMessageType type,
+  ) =>
+      DiscordMessage(
+        id: json['id'] as String?,
+        channelId: json['channel_id'] as String?,
+        guildId: json['guild_id'] as String?,
+        type: type,
+        content: json['content'] as String?,
+        embeds: (json['embeds'] as List<Object?>?)
+            ?.map((e) => Embed.fromJson(e! as Map<String, Object?>))
+            .toList(),
+        attachments: (json['attachments'] as List<Object?>?)
+            ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
+            .toList(),
+        author: json['author'] == null
+            ? null
+            : Author.fromJson(json['author']! as Map<String, Object?>),
+        nonce: json['nonce'] as String?,
+      );
+
+  /// The type of this message.
+  final DiscordMessageType type;
+
+  /// The ID of this message.
+  final String? id;
+
+  /// The ID of the server this message was sent in.
+  final String? guildId;
+
+  /// The ID of the channel this message was sent in.
+  final String? channelId;
+
+  /// The content of this message.
+  final String? content;
+
+  /// The embeds of this message.
+  final List<Embed>? embeds;
+
+  /// The author of this message.
   final Author? author;
+
+  /// The nonce of this message.
   final String? nonce;
+
+  /// The attachments of this message.
   final List<Attachment>? attachments;
-  final String channelId;
+
+  /// Whether this message is a create message.
+  bool get isCreated => type == DiscordMessageType.create;
+
+  /// Whether this message is a update message.
+  bool get isUpdated => type == DiscordMessageType.update;
+
+  /// Whether this message is a delete message.
+  bool get isDelete => type == DiscordMessageType.delete;
 
   @override
-  String toString() => '$runtimeType('
+  String toString() => '$DiscordMessage('
       'id: $id, '
+      'channelId: $channelId, '
+      'guildId: $guildId, '
+      'type: $type, '
       'content: $content, '
       'embeds: $embeds, '
       'auhor: $author, '
       'nonce: $nonce, '
       'attachments: $attachments'
       ')';
-
-  bool get created => switch (this) {
-        DiscordMessageCreate() => true,
-        _ => false,
-      };
-
-  bool get updated => switch (this) {
-        DiscordMessageUpdate() => true,
-        _ => false,
-      };
-}
-
-final class DiscordMessageCreate extends DiscordMessage {
-  const DiscordMessageCreate({
-    required super.id,
-    required super.content,
-    required super.embeds,
-    required super.channelId,
-    super.author,
-    super.nonce,
-    super.attachments,
-  });
-
-  factory DiscordMessageCreate.fromJson(Map<String, Object?> json) =>
-      DiscordMessageCreate(
-        nonce: json['nonce'] as String?,
-        id: json['id']! as String,
-        content: json['content']! as String,
-        author: json['author'] != null
-            ? Author.fromJson(json['author']! as Map<String, Object?>)
-            : null,
-        attachments: (json['attachments'] as List<Object?>?)
-            ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
-            .toList(),
-        embeds: (json['embeds']! as List<Object?>)
-            .map((e) => Embed.fromJson(e! as Map<String, Object?>))
-            .toList(),
-        channelId: json['channel_id']! as String,
-      );
-}
-
-final class DiscordMessageUpdate extends DiscordMessage {
-  const DiscordMessageUpdate({
-    required super.id,
-    required super.embeds,
-    required super.content,
-    required super.channelId,
-    super.author,
-    super.attachments,
-    super.nonce,
-  });
-
-  factory DiscordMessageUpdate.fromJson(Map<String, Object?> json) =>
-      DiscordMessageUpdate(
-        nonce: json['nonce'] as String?,
-        id: json['id']! as String,
-        content: json['content'] as String? ?? '',
-        author: json['author'] != null
-            ? Author.fromJson(json['author']! as Map<String, Object?>)
-            : null,
-        attachments: (json['attachments'] as List<Object?>?)
-            ?.map((e) => Attachment.fromJson(e! as Map<String, Object?>))
-            .toList(),
-        embeds: (json['embeds']! as List<Object?>)
-            .map((e) => Embed.fromJson(e! as Map<String, Object?>))
-            .toList(),
-        channelId: json['channel_id']! as String,
-      );
 }
 
 @immutable
@@ -242,13 +230,14 @@ class DiscordMessageDecoder extends Converter<String, DiscordEvent> {
           't': final String t,
           'd': final Map<String, Object?> d,
         }) {
-      return switch (t) {
-        'MESSAGE_CREATE' => DiscordMessageCreate.fromJson(d),
-        'MESSAGE_UPDATE' => DiscordMessageUpdate.fromJson(d),
-        _ => DiscordEventUnsupported(type: t, data: d),
-      };
+      final type = DiscordMessageType.fromString(t);
+
+      return DiscordMessage.fromJson(d, type);
     }
 
-    return DiscordEventUnsupported(type: 'Unknown', data: json);
+    return DiscordMessage(
+      type: DiscordMessageType.unsupported,
+      content: input,
+    );
   }
 }

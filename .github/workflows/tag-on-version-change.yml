@@ -1,0 +1,46 @@
+on:
+    push:
+jobs:
+    create-tag:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v2
+  
+        - name: Extract Version from pubspec.yaml
+          id: get_version
+          run: |
+            VERSION=$(grep 'version:' pubspec.yaml | cut -d ':' -f 2 | xargs)
+            echo "::set-output name=VERSION::$VERSION"
+  
+        - name: Check if Version Changed
+          id: check_version
+          uses: actions/github-script@v3
+          with:
+            github-token: ${{secrets.GITHUB_TOKEN}}
+            script: |
+              const payload = context.payload;
+              const before = payload.before;
+              const after = payload.after;
+              const response = await github.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: before,
+                head: after
+              });
+              const changes = response.data.files;
+              for (let i = 0; i < changes.length; i++) {
+                if (changes[i].filename === 'pubspec.yaml') {
+                  return true;
+                }
+              }
+              return false;
+            result-encoding: string
+  
+        - name: Create and Push Tag
+          if: steps.check_version.outputs.result == 'true'
+          run: |
+            VERSION=${{ steps.get_version.outputs.VERSION }}
+            git tag -a v$VERSION -m "Version $VERSION"
+            git push origin v$VERSION
+  

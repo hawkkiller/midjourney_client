@@ -14,15 +14,18 @@ Future<void> main(List<Object> arguments) async {
     channelId: Env.channelId,
     serverId: Env.serverId,
     token: Env.token,
+    logLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
-  final imagine = client.imagine('Cat with sword')..listen(print);
+  final imagine = client.imagine('Cat with sword').asBroadcastStream()
+    ..listen(print);
 
-  final imagineResult = await imagine.last;
+  final imagineResult = await imagine.finished;
 
-  final variation = client.variation(imagineResult, 1)..listen(print);
+  final variation = client.variation(imagineResult, 4).asBroadcastStream()
+    ..listen(print);
 
-  final variationResult = await variation.last;
+  final variationResult = await variation.finished;
 
   print(variationResult);
   exit(0);

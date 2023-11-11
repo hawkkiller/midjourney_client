@@ -19,12 +19,47 @@ typedef ValueChanged<T> = void Function(T value);
 /// Discord message with `associated` nonce
 ///
 /// This is used to create association between nonce and message.
-typedef DiscordMessageWithNonce = ({String? nonce, DiscordMessage message});
+final class LinkedMessage {
+  LinkedMessage({
+    required this.discordMessage,
+    required this.inProgressMessage,
+  });
+
+  final DiscordMessage discordMessage;
+  final InProgressMessage inProgressMessage;
+
+  @override
+  String toString() => (StringBuffer()
+        ..write('LinkedMessage(')
+        ..write('discordMessage: $discordMessage, ')
+        ..write('inProgressMessage: $inProgressMessage')
+        ..write(')'))
+      .toString();
+}
 
 /// Model that is used to store temporary data about a message that is being waited for.
 ///
 /// This model is created when `MESSAGE_CREATE` event is emitted at first.
-typedef WaitDiscordMessage = ({String nonce, String prompt});
+final class InProgressMessage {
+  InProgressMessage({
+    required this.nonce,
+    required this.prompt,
+    required this.id,
+  });
+
+  final String nonce;
+  final String? prompt;
+  final String? id;
+
+  @override
+  String toString() => (StringBuffer()
+        ..write('InProgressMessage(')
+        ..write('nonce: $nonce, ')
+        ..write('prompt: $prompt, ')
+        ..write('id: $id')
+        ..write(')'))
+      .toString();
+}
 
 /// Discord connection interface
 ///
@@ -58,16 +93,15 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
   /// Message waiting pool
   ///
-  /// Key is message ID, value is [WaitDiscordMessage]
-  final Map<String, WaitDiscordMessage> _waitMessages = {};
+  /// Key is message ID, value is [InProgressMessage]
+  final Map<String, InProgressMessage> _inProgressMessages = {};
 
   /// Callbacks for waiting messages
   ///
   /// Key is nonce, value is a callback
-  final _waitMessageCallbacks =
-      <String, ValueChanged<DiscordMessageWithNonce>>{};
+  final _inProgressCalbacks = <String, ValueChanged<LinkedMessage>>{};
 
-  StreamSubscription<DiscordMessageWithNonce>? _messagesSubscription;
+  StreamSubscription<LinkedMessage>? _messagesSubscription;
   StreamSubscription<WebsocketState>? _socketStateSubscription;
 
   @override
@@ -77,8 +111,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
     await _messagesSubscription?.cancel();
     await _socketStateSubscription?.cancel();
 
-    _waitMessageCallbacks.clear();
-    _waitMessages.clear();
+    _inProgressCalbacks.clear();
+    _inProgressMessages.clear();
   }
 
   @override
@@ -126,49 +160,54 @@ final class DiscordConnectionImpl implements DiscordConnection {
     String nonce,
     ImageProgressNotifyCallback notify,
   ) {
-    _waitMessageCallbacks[nonce] = (discordMsg) async {
+    _inProgressCalbacks[nonce] = (discordMsg) async {
       await _imageMessageNotifyCallback(discordMsg, notify, nonce);
     };
+    MLogger.instance.v('Registered callback for nonce $nonce');
   }
 
   /// Process the image message callback
   /// If the nonce of the incoming message matches the expected nonce,
   /// handle the message according to its state and invoke the callback with appropriate arguments
   Future<void> _imageMessageNotifyCallback(
-    DiscordMessageWithNonce messageNonce,
+    LinkedMessage linkedMessage,
     ImageProgressNotifyCallback callback,
     String nonce,
   ) async {
-    if (messageNonce.nonce != nonce) return;
+    if (linkedMessage.inProgressMessage.nonce != nonce) return;
 
     // Discord message
-    final msg = messageNonce.message;
+    final discordMessage = linkedMessage.discordMessage;
 
     // If the message is created, then:
     // - if it has a nonce -> it is the first message,
     //   that signifies the start of the image generation
     // - if it has no nonce -> image generation is finished
-    if (msg.created) {
-      await _handleCreatedImageMessage(msg, callback, nonce);
+    if (discordMessage.isCreated) {
+      await _handleCreatedImageMessage(linkedMessage, callback, nonce);
+      return;
     }
 
     // Updated message event
     // Nonce should be null and attachments should be present
-    if (msg.updated &&
-        msg.nonce == null &&
-        (msg.attachments?.isNotEmpty ?? false)) {
-      await _handleUpdatedImageMessage(msg, callback, nonce);
+    if (discordMessage.isUpdated &&
+        discordMessage.nonce == null &&
+        (discordMessage.attachments?.isNotEmpty ?? false)) {
+      await _handleUpdatedImageMessage(discordMessage, callback, nonce);
+      return;
     }
+
+    return;
   }
 
   Future<void> _imageMessageError({
-    required ImageProgressNotifyCallback callback,
+    required ImageProgressNotifyCallback notify,
     required String error,
     required String nonce,
   }) async {
-    callback(null, MidjourneyException(error));
-    _waitMessageCallbacks.remove(nonce);
-    _waitMessages.remove(nonce);
+    notify(null, MidjourneyException(error));
+    _inProgressCalbacks.remove(nonce);
+    _inProgressMessages.removeWhere((key, value) => value.nonce == nonce);
   }
 
   /// Handle created image message
@@ -179,18 +218,24 @@ final class DiscordConnectionImpl implements DiscordConnection {
   /// If the message has no nonce, remove it from the waiting
   /// pool and trigger an image generation finished event.
   Future<void> _handleCreatedImageMessage(
-    DiscordMessage msg,
-    ImageProgressNotifyCallback callback,
+    LinkedMessage linkedMessage,
+    ImageProgressNotifyCallback notify,
     String nonce,
   ) async {
+    final msg = linkedMessage.discordMessage;
+    final progressMessage = linkedMessage.inProgressMessage;
+
     if (msg.nonce == null) {
+      // Clean up
+      _inProgressCalbacks.remove(nonce);
+      _inProgressMessages.remove(progressMessage.id);
+
       // Trigger an image generation finished event
-      _waitMessageCallbacks.remove(nonce);
-      await callback(
+      await notify(
         MidjourneyMessageImageFinish(
           id: nonce,
-          messageId: msg.id,
-          content: msg.content,
+          messageId: msg.id!,
+          content: msg.content!,
           uri: msg.attachments!.first.url.replaceHost(config.cdnUrl),
         ),
         null,
@@ -199,14 +244,15 @@ final class DiscordConnectionImpl implements DiscordConnection {
       return;
     }
     String? reason;
+    final embeds = msg.embeds ?? [];
     // check if there is an issue with message, i.e. error or warning
-    if (msg.embeds.isNotEmpty) {
-      final embed = msg.embeds.first;
+    if (embeds.isNotEmpty) {
+      final embed = embeds.first;
 
       // Discord error color
       if (embed.color == 16711680) {
         await _imageMessageError(
-          callback: callback,
+          notify: notify,
           error: embed.description!,
           nonce: nonce,
         );
@@ -229,7 +275,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
         return;
       } else if (title.contains('Invalid')) {
         await _imageMessageError(
-          callback: callback,
+          notify: notify,
           error: embed.description!,
           nonce: nonce,
         );
@@ -239,19 +285,20 @@ final class DiscordConnectionImpl implements DiscordConnection {
         reason = '$title\n$description';
       }
     }
-    _waitMessages[msg.id] = (
+    _inProgressMessages[msg.id!] = InProgressMessage(
       nonce: msg.nonce!,
       prompt: _content2Prompt(msg.content),
+      id: msg.id,
     );
-    MLogger.instance.d('Added ${msg.id} to wait messages');
+    MLogger.instance.d('Added ${msg.id} to in progress messages');
 
     // Trigger an image generation started event
-    await callback(
+    await notify(
       MidjourneyMessageImageProgress(
         progress: 0,
         id: msg.nonce!,
-        messageId: msg.id,
-        content: reason ?? msg.content,
+        messageId: msg.id!,
+        content: reason ?? msg.content ?? '',
       ),
       null,
     );
@@ -267,7 +314,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
     ImageProgressNotifyCallback callback,
     String nonce,
   ) async {
-    final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content);
+    final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content!);
     final progress =
         progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : 0;
 
@@ -276,8 +323,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
       MidjourneyMessageImageProgress(
         id: nonce,
         progress: progress ?? 0,
-        messageId: msg.id,
-        content: msg.content,
+        messageId: msg.id!,
+        content: msg.content!,
         uri: msg.attachments!.first.url.replaceHost(config.cdnUrl),
       ),
       null,
@@ -304,7 +351,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
           return isChannel && isMidjourneyBot;
         })
-        .map(_associateDiscordMessageWithNonce)
+        .map(_linkDiscordToInProgressMessage)
+        .whereType<LinkedMessage>()
         .listen(_handleDiscordMessage);
   }
 
@@ -312,14 +360,15 @@ final class DiscordConnectionImpl implements DiscordConnection {
   ///
   /// This method is called once the client is initialized.
   void _handleWebSocketStateChanges() {
-    _socketStateSubscription =
-        _webSocketClient.stateChanges.listen((event) async {
-      MLogger.instance.d('WebSocket state change: $event');
-      if (event == WebsocketState.open) {
-        await _authenticate();
-        _initiatePeriodicHeartbeat();
-      }
-    });
+    _socketStateSubscription = _webSocketClient.stateChanges.listen(
+      (event) async {
+        MLogger.instance.d('WebSocket state change: $event');
+        if (event == WebsocketState.open) {
+          await _authenticate();
+          _initiatePeriodicHeartbeat();
+        }
+      },
+    );
   }
 
   /// Authenticate client with Discord server
@@ -352,71 +401,95 @@ final class DiscordConnectionImpl implements DiscordConnection {
   }
 
   /// Process incoming Discord message and map it to nonce-message pair
-  DiscordMessageWithNonce _associateDiscordMessageWithNonce(
-    DiscordMessage msg,
+  LinkedMessage? _linkDiscordToInProgressMessage(
+    DiscordMessage discordMessage,
   ) {
-    final nonce = _getNonceForMessage(msg);
-    return (nonce: nonce, message: msg);
+    final inProgressMessage = _getInProgressMessage(discordMessage);
+
+    if (inProgressMessage == null) {
+      MLogger.instance.v(
+        'No inProgress message found for ${discordMessage.id}, $_inProgressMessages',
+      );
+      return null;
+    }
+
+    return LinkedMessage(
+      inProgressMessage: inProgressMessage,
+      discordMessage: discordMessage,
+    );
   }
 
   /// Handle received Discord event
-  void _handleDiscordMessage(DiscordMessageWithNonce event) {
+  void _handleDiscordMessage(LinkedMessage event) {
     MLogger.instance.v('Discord message received: $event');
-    final callback = _waitMessageCallbacks[event.nonce];
+    final callback = _inProgressCalbacks[event.inProgressMessage.nonce];
     callback?.call(event);
   }
 
   /// Get nonce associated with a message
-  String? _getNonceForMessage(DiscordMessage msg) {
-    if (msg.created) return _getNonceForCreatedMessage(msg);
-    if (msg.updated) return _getNonceForUpdatedMessage(msg);
+  InProgressMessage? _getInProgressMessage(DiscordMessage msg) {
+    if (msg.isCreated) return _getInProgressMessageForCreatedMessage(msg);
+    if (msg.isUpdated) return _getInProgressMessageForUpdatedMessage(msg);
+    if (msg.isDelete) return _getInProgressMessageForDeletedMessage(msg);
 
     return null;
   }
 
-  /// Get nonce for created message
-  String? _getNonceForCreatedMessage(DiscordMessage msg) {
-    if (msg.nonce != null) {
-      MLogger.instance.d('Created message: ${msg.id}');
-      return msg.nonce;
-    }
+  /// Get nonce for deleted message
+  InProgressMessage? _getInProgressMessageForDeletedMessage(
+    DiscordMessage msg,
+  ) {
+    final message = _inProgressMessages[msg.id];
 
-    // Get nonce for created message without nonce
-    final msgWithSamePrompt = _getWaitMessageByContent(msg.content);
-    final waitMessage = msgWithSamePrompt.waitMessage;
-
-    if (waitMessage != null) {
-      final nonce = waitMessage.nonce;
-      MLogger.instance.v('Associated ${msg.id} with nonce $nonce');
-      return nonce;
-    }
-    return null;
-  }
-
-  /// Get nonce for updated message
-  String? _getNonceForUpdatedMessage(DiscordMessage msg) {
-    MLogger.instance.v('Trying to find nonce for updated message: ${msg.id}');
-    final waitMessage = _waitMessages[msg.id];
-    if (waitMessage == null) {
-      MLogger.instance.v('Wait messages: $_waitMessages');
-      MLogger.instance.v('Wait message callbacks: $_waitMessageCallbacks');
-      MLogger.instance.d('No wait message found for ${msg.id}, returning');
+    if (message == null) {
+      MLogger.instance.v('In progress messages: $_inProgressMessages');
+      MLogger.instance.v('In progress message callbacks: $_inProgressCalbacks');
+      MLogger.instance.d(
+        'No in progress message found for ${msg.id}, returning',
+      );
 
       return null;
     }
 
-    final nonce = waitMessage.nonce;
-    MLogger.instance.v('Updated message: ${msg.id} with nonce $nonce');
+    return message;
+  }
 
-    if (waitMessage.prompt.isEmpty) {
-      // handle overloaded case when first created was without content
-      _waitMessages[msg.id] = (
-        prompt: _content2Prompt(msg.content),
-        nonce: nonce,
+  /// Get nonce for created message
+  InProgressMessage? _getInProgressMessageForCreatedMessage(
+    DiscordMessage msg,
+  ) {
+    if (msg.nonce != null) {
+      MLogger.instance.d('Created message: ${msg.id}');
+      return InProgressMessage(
+        nonce: msg.nonce!,
+        id: msg.id,
+        prompt: null,
       );
     }
 
-    return nonce;
+    // Get nonce for created message without nonce
+    final msgWithSamePrompt = _getInProgressMessageByContent(msg.content!);
+
+    return msgWithSamePrompt;
+  }
+
+  /// Get nonce for updated message
+  InProgressMessage? _getInProgressMessageForUpdatedMessage(
+    DiscordMessage msg,
+  ) {
+    MLogger.instance.v('Trying to find nonce for updated message: ${msg.id}');
+    final message = _inProgressMessages[msg.id];
+
+    if (message == null) {
+      MLogger.instance.v('In progress messages: $_inProgressMessages');
+      MLogger.instance.v('In progress message callbacks: $_inProgressCalbacks');
+      MLogger.instance
+          .d('No In progress message found for ${msg.id}, returning');
+
+      return null;
+    }
+
+    return message;
   }
 
   /// Convert message content to prompt
@@ -433,24 +506,18 @@ final class DiscordConnectionImpl implements DiscordConnection {
     }
   }
 
-  /// Get wait message by content
-  ({WaitDiscordMessage? waitMessage, String? id}) _getWaitMessageByContent(
+  /// Get In progress message by content
+  InProgressMessage? _getInProgressMessageByContent(
     String content,
   ) {
     final prompt = _content2Prompt(content);
 
-    MapEntry<String, WaitDiscordMessage>? entry;
-
-    for (final e in _waitMessages.entries) {
-      MLogger.instance.v('Comparing $prompt with ${e.value.prompt}');
-      if (e.value.prompt == prompt) {
-        entry = e;
-        break;
+    for (final message in _inProgressMessages.values) {
+      if (message.prompt == prompt) {
+        return message;
       }
     }
 
-    final value = _waitMessages.remove(entry?.key);
-
-    return (waitMessage: value, id: entry?.key);
+    return null;
   }
 }
