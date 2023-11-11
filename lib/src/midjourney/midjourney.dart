@@ -76,7 +76,9 @@ final class Midjourney {
     );
     MLogger.level = logLevel;
     if (_$api != null) {
-      MLogger.instance.w('Midjourney client is already initialized, closing it');
+      MLogger.instance.w(
+        'Midjourney client is already initialized, closing it',
+      );
       await close();
     }
     _$api ??= MidjourneyApiDiscordImpl(
@@ -91,7 +93,8 @@ final class Midjourney {
   Future<void> close() async {
     MLogger.instance.i('Closing midjourney client');
     if (_$api == null) {
-      MLogger.instance.w('Midjourney client is already closed or not initialized');
+      MLogger.instance
+          .w('Midjourney client is already closed or not initialized');
       return;
     }
     await _$api?.close();

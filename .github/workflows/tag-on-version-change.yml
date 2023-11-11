@@ -1,46 +1,39 @@
+name: Tagging Workflow
+
 on:
-    push:
+  push:
+    branches:
+      - main  # or any other branch you want to trigger this workflow
+
 jobs:
-    create-tag:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v2
-  
-        - name: Extract Version from pubspec.yaml
-          id: get_version
-          run: |
-            VERSION=$(grep 'version:' pubspec.yaml | cut -d ':' -f 2 | xargs)
-            echo "::set-output name=VERSION::$VERSION"
-  
-        - name: Check if Version Changed
-          id: check_version
-          uses: actions/github-script@v3
-          with:
-            github-token: ${{secrets.GITHUB_TOKEN}}
-            script: |
-              const payload = context.payload;
-              const before = payload.before;
-              const after = payload.after;
-              const response = await github.repos.compareCommits({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                base: before,
-                head: after
-              });
-              const changes = response.data.files;
-              for (let i = 0; i < changes.length; i++) {
-                if (changes[i].filename === 'pubspec.yaml') {
-                  return true;
-                }
-              }
-              return false;
-            result-encoding: string
-  
-        - name: Create and Push Tag
-          if: steps.check_version.outputs.result == 'true'
-          run: |
-            VERSION=${{ steps.get_version.outputs.VERSION }}
-            git tag -a v$VERSION -m "Version $VERSION"
-            git push origin v$VERSION
-  
+  create-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ensures all tags are fetched
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Get version from pubspec
+        id: pubspec
+        run: |
+          echo "VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')" >> $GITHUB_ENV
+
+      - name: Get latest tag
+        id: latest-tag
+        run: |
+          echo "LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)"
+          echo "LATEST_TAG=${LATEST_TAG//v/}" >> $GITHUB_ENV
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+
+      - name: Compare and Tag
+        if: env.VERSION > env.LATEST_TAG
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag v$VERSION
+          git push origin v$VERSION
