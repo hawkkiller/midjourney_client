@@ -2,12 +2,11 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
-## 0.4.1 (2023-11-07)
+## 0.4.1-pre.4 (2023-11-11)
 
-- Added more tests
-- Refactored inner structure & code & comments
-- Now commands are fetched during initialization
-- Refactored Logger
+- Refactored and simplified code & naming
+- Replaced records with classes
+- Fixed crashes
 
 ## 0.4.1-pre.3 (2023-11-10)
 

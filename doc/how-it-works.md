@@ -1,5 +1,7 @@
 # How it works?
 
+WIP.
+
 ## Overview
 
 Currently, the library uses the Discord APIs, as Midjourney doesn't have a public API yet. Basically it acts as a Discord client and communicates with the Discord gateway. It sends commands which are handled by the Midjourney bot. Then it listens for events and sends them to the library user.
