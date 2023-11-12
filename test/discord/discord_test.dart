@@ -59,39 +59,38 @@ void main() {
 
   group('Discord >', () {
     group('Interaction Client >', () {
-      late http.Client httpClient;
-      late DiscordInteractionClientImpl discordInteractionClient;
-      late Snowflaker snowflaker;
-
-      setUp(() {
-        httpClient = http_testing.MockClient(
-          (request) async => http.Response(
-            '',
-            // discord interaction api returns 204 on success
-            204,
+      test('Imagine should work correctly with 204', () {
+        final discordInteractionClient = DiscordInteractionClientImpl(
+          config: emptyConfig,
+          snowflaker: _SnowflakerMock(),
+          overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              204,
+            ),
           ),
         );
-        snowflaker = _SnowflakerMock();
-        discordInteractionClient = DiscordInteractionClientImpl(
-          config: emptyConfig,
-          httpClient: httpClient,
-          snowflaker: snowflaker,
-          overrideCommands: overrideCommands,
-        );
-      });
-
-      tearDown(() {
-        httpClient.close();
-      });
-
-      test('Imagine should work correctly with 204', () {
         expect(
           discordInteractionClient.createImagine('prompt'),
-          completion(123),
+          completion(equals('123')),
         );
       });
 
-      test('Variation should work correctly with 204', () {
+      test('Variation should work correctly with 204', () async {
+        final discordInteractionClient = DiscordInteractionClientImpl(
+          config: emptyConfig,
+          snowflaker: _SnowflakerMock(),
+          overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              204,
+            ),
+          ),
+        );
         final response = discordInteractionClient.createVariation(
           const MidjourneyMessageImageFinish(
             id: 'id',
@@ -104,11 +103,23 @@ void main() {
 
         expect(
           response,
-          completion(123),
+          completion(equals('123')),
         );
       });
 
       test('Upscale should work correctly with 204', () {
+        final discordInteractionClient = DiscordInteractionClientImpl(
+          config: emptyConfig,
+          snowflaker: _SnowflakerMock(),
+          overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              204,
+            ),
+          ),
+        );
         final response = discordInteractionClient.createUpscale(
           const MidjourneyMessageImageFinish(
             id: 'id',
@@ -121,23 +132,22 @@ void main() {
 
         expect(
           response,
-          completion(123),
+          completion(equals('123')),
         );
       });
 
       test('Imagine should fail with non 204', () {
-        httpClient = http_testing.MockClient(
-          (request) async => http.Response(
-            '{"id": "000"}',
-            // discord interaction api returns 204 on success
-            404,
-          ),
-        );
-        discordInteractionClient = DiscordInteractionClientImpl(
+        final discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          httpClient: httpClient,
-          snowflaker: snowflaker,
+          snowflaker: _SnowflakerMock(),
           overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              404,
+            ),
+          ),
         );
 
         expect(
@@ -146,25 +156,24 @@ void main() {
             isA<InteractionException>().having(
               (e) => e.code,
               'code',
-              404,
+              equals(404),
             ),
           ),
         );
       });
 
       test('Variation should fail with non 204', () {
-        httpClient = http_testing.MockClient(
-          (request) async => http.Response(
-            '{"id": "000"}',
-            // discord interaction api returns 204 on success
-            404,
-          ),
-        );
-        discordInteractionClient = DiscordInteractionClientImpl(
+        final discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          httpClient: httpClient,
-          snowflaker: snowflaker,
+          snowflaker: _SnowflakerMock(),
           overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              404,
+            ),
+          ),
         );
 
         final response = discordInteractionClient.createVariation(
@@ -183,25 +192,24 @@ void main() {
             isA<InteractionException>().having(
               (e) => e.code,
               'code',
-              404,
+              equals(404),
             ),
           ),
         );
       });
 
       test('Upscale should fail with non 204', () {
-        httpClient = http_testing.MockClient(
-          (request) async => http.Response(
-            '{"id": "000"}',
-            // discord interaction api returns 204 on success
-            404,
-          ),
-        );
-        discordInteractionClient = DiscordInteractionClientImpl(
+        final discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          httpClient: httpClient,
-          snowflaker: snowflaker,
+          snowflaker: _SnowflakerMock(),
           overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              404,
+            ),
+          ),
         );
 
         final response = discordInteractionClient.createUpscale(
@@ -220,23 +228,22 @@ void main() {
             isA<InteractionException>().having(
               (e) => e.code,
               'code',
-              404,
+              equals(404),
             ),
           ),
         );
       });
       test('Fetch commands on initialize', () async {
-        final mockClient = http_testing.MockClient(
-          (request) async => http.Response(
-            jsonEncode([applicationCommand.toJson()]),
-            200,
-          ),
-        );
-
         final discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          httpClient: mockClient,
-          snowflaker: snowflaker,
+          snowflaker: _SnowflakerMock(),
+          overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              jsonEncode([applicationCommand.toJson()]),
+              200,
+            ),
+          ),
         );
 
         await expectLater(
@@ -250,16 +257,33 @@ void main() {
         );
       });
       test('Initialize fails on wrong response', () {
+        final discordInteractionClient = DiscordInteractionClientImpl(
+          config: emptyConfig,
+          snowflaker: _SnowflakerMock(),
+          overrideCommands: overrideCommands,
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              // discord interaction api returns 204 on success
+              204,
+            ),
+          ),
+        );
         expectLater(
           discordInteractionClient.initialize(),
           throwsA(isA<InitializationException>()),
         );
       });
       test('GetCommandByName fails if commands are empty', () {
-        discordInteractionClient = DiscordInteractionClientImpl(
+        final discordInteractionClient = DiscordInteractionClientImpl(
           config: emptyConfig,
-          httpClient: httpClient,
-          snowflaker: snowflaker,
+          snowflaker: _SnowflakerMock(),
+          httpClient: http_testing.MockClient(
+            (request) async => http.Response(
+              '',
+              404,
+            ),
+          ),
         );
 
         expect(
