@@ -1,5 +1,12 @@
 name: Tagging Workflow
 
+permissions: 
+  contents: write
+  issues: write
+  pull-requests: write
+  repository-projects: write
+  statuses: write
+
 on:
   push:
     branches:
@@ -28,7 +35,7 @@ jobs:
           echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
       - name: Create tag
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         if: ${{ env.VERSION > env.LATEST_TAG }}
         with:
           script: |
