@@ -15,9 +15,6 @@ jobs:
         with:
           fetch-depth: 0  # ensures all tags are fetched
 
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
-
       - name: Get version from pubspec
         id: pubspec
         run: |
@@ -30,10 +27,14 @@ jobs:
           echo "LATEST_TAG=${LATEST_TAG//v/}" >> $GITHUB_ENV
           echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
-      - name: Compare and Tag
-        if: env.VERSION > env.LATEST_TAG
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git tag v$VERSION
-          git push origin v$VERSION
+      - name: Create tag
+        uses: actions/github-script@v5
+        if: ${{ env.VERSION > env.LATEST_TAG }}
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ env.VERSION }}',
+              sha: context.sha
+            })
