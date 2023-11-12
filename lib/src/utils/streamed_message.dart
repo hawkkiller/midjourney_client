@@ -11,7 +11,7 @@ final class StreamedMessage<T extends Object, S extends T>
   Future<S> get finished => last.then((value) => value as S);
 
   @override
-  Stream<T> asBroadcastStream({
+  StreamedMessage<T, S> asBroadcastStream({
     void Function(StreamSubscription<T> subscription)? onListen,
     void Function(StreamSubscription<T> subscription)? onCancel,
   }) =>

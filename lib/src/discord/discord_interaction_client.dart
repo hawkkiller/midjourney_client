@@ -12,59 +12,90 @@ import 'package:midjourney_client/src/utils/logger.dart';
 import 'package:midjourney_client/src/utils/rate_limiter.dart';
 import 'package:snowflaker/snowflaker.dart';
 
-typedef ImageMessageCallback = FutureOr<void> Function(
-  MidjourneyMessageImage? msg,
+typedef ImageProgressNotifyCallback = FutureOr<void> Function(
+  MidjourneyMessageImage? imageMessage,
   Exception? error,
 );
 
-abstract interface class DiscordInteractionClient {
-  /// Imagine a new picture with the given [prompt].
-  Future<int> imagine(String prompt);
+/// Defines the interface for interacting with Discord's interaction API.
+abstract class DiscordInteractionClient {
+  /// Initializes the client
+  ///
+  /// Fetches the list of commands from Discord.
+  /// This is required to be called before any other method.
+  Future<void> initialize();
 
-  /// Create a new variation based on the picture
-  Future<int> variation(MidjourneyMessageImage imageMessage, int index);
+  /// Creates a new imagine job.
+  ///
+  /// Returns the nonce of the interaction.
+  Future<String> createImagine(String prompt);
 
-  /// Upscale the given [imageMessage] to better quality.
-  Future<int> upscale(MidjourneyMessageImage imageMessage, int index);
+  /// Creates a new variation job.
+  ///
+  /// Returns the nonce of the interaction.
+  Future<String> createVariation(
+    MidjourneyMessageImage imageMessage,
+    int index,
+  );
+
+  /// Creates a new upscale job.
+  ///
+  /// Returns the nonce of the interaction.
+  Future<String> createUpscale(MidjourneyMessageImage imageMessage, int index);
 }
 
-final class DiscordInteractionClientImpl implements DiscordInteractionClient {
+/// Implementation of the Discord interaction service.
+class DiscordInteractionClientImpl implements DiscordInteractionClient {
   DiscordInteractionClientImpl({
     required MidjourneyConfig config,
-    @visibleForTesting Snowflaker? snowflaker,
-    @visibleForTesting http.Client? client,
-  })  : _snowflaker = snowflaker ?? Snowflaker(workerId: 1, datacenterId: 1),
-        _config = config,
-        _client = client ?? http.Client();
+    Snowflaker? snowflaker,
+    http.Client? httpClient,
+    @visibleForTesting Map<CommandName, ApplicationCommand>? overrideCommands,
+  })  : _config = config,
+        _snowflaker = snowflaker ?? Snowflaker(workerId: 1, datacenterId: 1),
+        _httpClient = httpClient ?? http.Client(),
+        commandsCache = overrideCommands ?? {};
 
-  final http.Client _client;
+  final http.Client _httpClient;
   final MidjourneyConfig _config;
   final Snowflaker _snowflaker;
-  final _rateLimiter = RateLimiter(
+
+  final RateLimiter _rateLimiter = RateLimiter(
     limit: 1,
     period: const Duration(seconds: 2),
   );
+  late final Map<String, String> _headers = {
+    'Content-Type': 'application/json',
+    'Authorization': _config.token,
+  };
 
-  Future<void> _rateLimitedInteractions(
-    Map<String, Object?> body,
-  ) async =>
-      _rateLimiter(
-        () async => _interactions(body),
-      );
+  @visibleForTesting
+  final Map<CommandName, ApplicationCommand> commandsCache;
 
-  /// Execute a Discord interaction.
-  Future<void> _interactions(Map<String, Object?> body) async {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': _config.token,
-    };
+  /// Retrieves a command from cache by its name.
+  @visibleForTesting
+  ApplicationCommand getCommandByName(CommandName commandName) {
+    final command = commandsCache[commandName];
+    if (command == null) {
+      throw InitializationException(message: 'Command $commandName not found');
+    }
+    return command;
+  }
 
-    MLogger.d('Sending interaction: $body');
+  /// Executes a rate-limited interaction with the Discord API.
+  Future<void> _rateLimitedInteraction(Interaction interaction) async {
+    await _rateLimiter(() => _sendInteraction(interaction));
+  }
 
-    final response = await _client.post(
-      Uri.parse('${_config.baseUrl}/api/v10/interactions'),
+  /// Sends an interaction to the Discord API.
+  Future<void> _sendInteraction(Interaction interaction) async {
+    final body = interaction.toJson();
+    MLogger.instance.d('Sending interaction: $body');
+    final uri = Uri.parse('${_config.baseUrl}/api/v10/interactions');
+    final response = await _httpClient.post(
+      uri,
       body: jsonEncode(body),
-      headers: headers,
+      headers: _headers,
     );
 
     if (response.statusCode != 204) {
@@ -73,26 +104,85 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
         message: response.body,
       );
     }
-
-    MLogger.d('Interaction success');
-
-    return;
+    MLogger.instance.d('Interaction sent successfully');
   }
 
   @override
-  Future<int> imagine(String prompt) async {
+  Future<void> initialize() async {
+    final uri = Uri.parse(
+      '${_config.baseUrl}/api/v10/applications/${Constants.botID}/commands',
+    );
+    final response = await _httpClient.get(uri, headers: _headers);
+
+    if (response.statusCode != 200) {
+      throw InitializationException(
+        code: response.statusCode,
+        message: response.body,
+      );
+    }
+
+    final commandsList =
+        (jsonDecode(response.body) as List<Object?>).whereType<Object>();
+    for (final commandData in commandsList) {
+      final command =
+          ApplicationCommand.fromJson(commandData as Map<String, Object?>);
+      commandsCache[CommandName.fromString(command.name)] = command;
+    }
+  }
+
+  @override
+  Future<String> createImagine(String prompt) async {
+    final command = getCommandByName(CommandName.imagine);
+    final interaction = _createImagineInteraction(prompt, command);
+    await _rateLimitedInteraction(interaction);
+
+    return interaction.nonce;
+  }
+
+  @override
+  Future<String> createVariation(
+    MidjourneyMessageImage imageMessage,
+    int index,
+  ) async {
+    final interaction = _createVariationInteraction(
+      imageMessage: imageMessage,
+      index: index,
+    );
+    await _rateLimitedInteraction(interaction);
+    return interaction.nonce;
+  }
+
+  @override
+  Future<String> createUpscale(
+    MidjourneyMessageImage imageMessage,
+    int index,
+  ) async {
+    final interaction = _createUpscaleInteraction(
+      imageMessage: imageMessage,
+      index: index,
+    );
+    await _rateLimitedInteraction(interaction);
+    return interaction.nonce;
+  }
+
+  /// Helper method to create imagine interaction.
+  Interaction _createImagineInteraction(
+    String prompt,
+    ApplicationCommand command,
+  ) {
     final nonce = _snowflaker.nextId();
+
     final imaginePayload = Interaction(
       type: InteractionType.applicationCommand,
-      applicationId: Constants.midjourneyBotID,
+      applicationId: command.applicationId,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
       nonce: nonce.toString(),
       data: InteractionDataApplicationCommand(
-        version: '1118961510123847772',
-        id: '938956540159881230',
-        name: 'imagine',
+        version: command.version,
+        id: command.id,
+        name: command.name,
         type: ApplicationCommandType.chatInput,
         options: [
           InteractionDataOption(
@@ -101,42 +191,28 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
             value: prompt,
           ),
         ],
-        applicationCommand: ApplicationCommand(
-          id: '938956540159881230',
-          applicationId: Constants.midjourneyBotID,
-          version: '1118961510123847772',
-          type: ApplicationCommandType.chatInput,
-          nsfw: false,
-          name: 'imagine',
-          description: 'Create images with Midjourney',
-          dmPermission: true,
-          options: [
-            ApplicationCommandOption(
-              type: ApplicationCommandOptionType.string,
-              name: 'prompt',
-              description: 'The prompt to imagine',
-              required: true,
-            ),
-          ],
-        ),
+        applicationCommand: command,
       ),
     );
 
-    final body = imaginePayload.toJson();
-
-    await _rateLimitedInteractions(body);
-    return nonce;
+    return imaginePayload;
   }
 
-  @override
-  Future<int> variation(MidjourneyMessageImage imageMessage, int index) async {
+  String uriToHash(String uri) => uri.split('_').removeLast().split('.').first;
+
+  /// Helper method to create variation interaction.
+  Interaction _createVariationInteraction({
+    required MidjourneyMessageImage imageMessage,
+    required int index,
+  }) {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
+
     final variationPayload = Interaction(
       messageFlags: 0,
       messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
-      applicationId: Constants.midjourneyBotID,
+      applicationId: Constants.botID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
@@ -147,22 +223,22 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       ),
     );
 
-    final body = variationPayload.toJson();
-
-    await _rateLimitedInteractions(body);
-
-    return nonce;
+    return variationPayload;
   }
 
-  @override
-  Future<int> upscale(MidjourneyMessageImage imageMessage, int index) async {
+  /// Helper method to create upscale interaction.
+  Interaction _createUpscaleInteraction({
+    required MidjourneyMessageImage imageMessage,
+    required int index,
+  }) {
     final nonce = _snowflaker.nextId();
     final hash = uriToHash(imageMessage.uri!);
+
     final upscalePayload = Interaction(
       messageFlags: 0,
       messageId: imageMessage.messageId,
       type: InteractionType.messageComponent,
-      applicationId: Constants.midjourneyBotID,
+      applicationId: Constants.botID,
       sessionId: _config.token,
       channelId: _config.channelId,
       guildId: _config.guildId,
@@ -173,12 +249,6 @@ final class DiscordInteractionClientImpl implements DiscordInteractionClient {
       ),
     );
 
-    final body = upscalePayload.toJson();
-
-    await _rateLimitedInteractions(body);
-
-    return nonce;
+    return upscalePayload;
   }
-
-  String uriToHash(String uri) => uri.split('_').removeLast().split('.').first;
 }

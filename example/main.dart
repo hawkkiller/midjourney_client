@@ -17,11 +17,13 @@ Future<void> main(List<Object> arguments) async {
     logLevel: midjourney_client.MLoggerLevel.verbose,
   );
 
-  final imagine = client.imagine('Elephant on a tree')..listen(print);
+  final imagine = client.imagine('Red rose').asBroadcastStream()..listen(print);
 
   final imagineResult = await imagine.finished;
 
-  final upscaled = client.upscale(imagineResult, 1)..listen(print);
+  final upscaled = client.upscale(imagineResult, 1).asBroadcastStream()
+    ..listen(print);
+
   final upscaleResult = await upscaled.finished;
 
   print(upscaleResult);

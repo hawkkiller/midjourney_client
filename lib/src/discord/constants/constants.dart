@@ -1,3 +1,3 @@
 sealed class Constants {
-  static const midjourneyBotID = '936929561302675456';
+  static const botID = '936929561302675456';
 }

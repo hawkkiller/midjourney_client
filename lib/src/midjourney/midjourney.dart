@@ -76,7 +76,9 @@ final class Midjourney {
     );
     MLogger.level = logLevel;
     if (_$api != null) {
-      MLogger.w('Midjourney client is already initialized, closing it');
+      MLogger.instance.w(
+        'Midjourney client is already initialized, closing it',
+      );
       await close();
     }
     _$api ??= MidjourneyApiDiscordImpl(
@@ -89,14 +91,15 @@ final class Midjourney {
   /// Releases the resources.
   /// If you want to use the client again, you need to call [initialize] again.
   Future<void> close() async {
-    MLogger.i('Closing midjourney client');
+    MLogger.instance.i('Closing midjourney client');
     if (_$api == null) {
-      MLogger.w('Midjourney client is already closed or not initialized');
+      MLogger.instance
+          .w('Midjourney client is already closed or not initialized');
       return;
     }
     await _$api?.close();
     _$api = null;
-    MLogger.i('Closed midjourney client');
+    MLogger.instance.i('Closed midjourney client');
   }
 
   /// Imagine a new picture with the given [prompt].

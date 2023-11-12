@@ -1,201 +1,151 @@
-# Midjourney Client (Unofficial)
+# Unofficial Midjourney Client
 
-This is an unofficial client for Midjourney that interfaces with the authentic Midjourney Bot via a Discord account token. As of now, it's stability has not been thoroughly tested. Consequently, it is advised against utilizing this client in production environments.
+Enhance your creative workflows with the Unofficial Midjourney Client, designed to integrate seamlessly with Discord's Midjourney Bot. Discover the potential of this library, whether you're crafting digital art or exploring new AI-driven frontiers.
 
-## Table of Contents
+## Quick Navigation
 
-- [Midjourney Client (Unofficial)](#midjourney-client-unofficial)
-  - [Table of Contents](#table-of-contents)
-  - [Install](#install)
-  - [Usage](#usage)
-  - [Set up](#set-up)
-    - [How to get server id \& channel id](#how-to-get-server-id--channel-id)
-    - [How to get token](#how-to-get-token)
-  - [Examples](#examples)
-    - [Imagine](#imagine)
-    - [Variation](#variation)
-    - [Upscale](#upscale)
+- [Installation Instructions](#installation)
+- [Getting Started](#getting-started)
+- [Configuration Steps](#configuration)
+- [Practical Examples](#examples)
 
-## Install
+## Installation
 
-For a flutter project, consider running this command:
+### Flutter Projects
 
 ```shell
 flutter pub add midjourney_client
 ```
 
-For a dart project, consider running this command:
+### Dart Projects
 
 ```shell
 dart pub add midjourney_client
 ```
 
-This installs the midjourney_client library and its dependencies.
+> This command incorporates the `midjourney_client` package along with necessary dependencies into your project.
 
-## Usage
+## Getting Started
 
 ```dart
-
 import 'dart:async';
+import 'package:midjourney_client/midjourney_client.dart';
 
-import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
-
-Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney();
-
+Future<void> main() async {
+  var client = MidjourneyClient();
+  
+  // Initialization with environment variables
   await client.initialize(
     channelId: Env.channelId,
     serverId: Env.serverId,
     token: Env.token,
   );
 
-  final imagine = client.imagine('Elephant on a tree')..listen(print);
+  // Example: Imagining an Elephant on a tree
+  var imaginationStream = client.imagine('Elephant on a tree');
+  imaginationStream.listen(print);
 
-  final result = await imagine.last;
-
-  final upscaled = client.upscale(result, 1)..listen(print);
-  final uResult = await upscaled.last;
-
-  print(uResult);
+  // Retrieving and printing the last item from the stream
+  var finalImagination = await imaginationStream.last;
+  print(finalImagination);
 }
-
 ```
 
-## Set up
+## Configuration
 
-__Pre-requisites__:
+### Prerequisites
 
-- [Discord account](https://discord.com/register)
-- [Discord server](https://support.discord.com/hc/en-us/articles/204849977-How-do-I-create-a-server-)
+- [Discord Account](https://discord.com/register)
+- [Discord Server Setup Guide](https://support.discord.com/hc/en-us/articles/204849977)
 
-### How to get server id & channel id
+### Acquiring Server & Channel IDs
 
-1. Open Discord app
-2. Open your server
-3. Right click on the message inside the channel you want to use
-4. Copy link to message, this should look like `https://discord.com/channels/${SERVER_ID}/${CHANNEL_ID}/${MESSAGE_ID}`
-5. Extract `SERVER_ID` and `CHANNEL_ID` from the link
+1. Navigate to your Discord server.
+2. Right-click on the desired channel.
+3. Select 'Copy ID' for both server and channel.
 
-### How to get token
+### Obtaining Your Token
 
-This one is a bit tricky, but here's how you can get it:
+1. Log into the Discord Web App.
+2. Open the developer console (Network tab).
+3. Send a message or refresh the page.
+4. Look for the 'Authorization' header in request headers.
+5. Copy the token value.
 
-1. Login to discord web app
-2. Open developer tools, head for Network tab
-3. Send a message to the channel you want to use or reload the page
-4. Click on a random request and go to request headers
-5. Find `Authorization` header and extract the value, it is your token
+> **Note:** The token is sensitive information. Do not share it with anyone.
 
 ## Examples
 
-This examples will instantiate a websocket connection to Discord Server and act as a Discord client sending messages to the channel specified by the `CHANNEL_ID` environment variable. The `SERVER_ID` environment variable is used to identify the server to which the channel belongs. The `TOKEN` environment variable is used to authenticate the client.
-
 ### Imagine
 
-This example will trigger `/imagine` command on the Midjourney Bot and print the result.
+Execute the `/imagine` command and showcase the results.
 
 ```shell
 dart run --define=SERVER_ID="" --define=CHANNEL_ID="" --define=TOKEN="" example/imagine.dart
 ```
 
 ```dart
-import 'dart:async';
-import 'dart:io';
+final client = midjourney_client.Midjourney();
 
-import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
+await client.initialize(
+  channelId: Env.channelId,
+  serverId: Env.serverId,
+  token: Env.token,
+);
 
-import 'env.dart';
+final imagine = client.imagine('Cat in a hat');
 
-Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney();
-
-  await client.initialize(
-    channelId: Env.channelId,
-    serverId: Env.serverId,
-    token: Env.token,
-  );
-
-  final imagine = client.imagine('Cat in a hat')..listen(print);
-
-  final result = await imagine.last;
-
-  print('Result: $result');
-  exit(0);
-}
+final result = await imagine.finished;
 ```
 
 ### Variation
 
-This example will trigger `/imagine` command on the Midjourney Bot, wait and trigger first variation.
+Create a variation on a theme with the Midjourney Bot.
 
 ```shell
 dart run --define=SERVER_ID="" --define=CHANNEL_ID="" --define=TOKEN="" example/variations.dart
 ```
 
 ```dart
-import 'dart:async';
-import 'dart:io';
+await client.initialize(
+  channelId: Env.channelId,
+  serverId: Env.serverId,
+  token: Env.token,
+);
 
-import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
+final imagine = client.imagine('Cat with sword');
 
-import 'env.dart';
+final imagineResult = await imagine.finished;
 
-Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney();
+final variation = client.variation(imagineResult,1);
 
-  await client.initialize(
-    channelId: Env.channelId,
-    serverId: Env.serverId,
-    token: Env.token,
-  );
-
-  final imagine = client.imagine('Cat with sword')..listen(print);
-
-  final result = await imagine.last;
-
-  final variation = client.variation(result, 1)..listen(print);
-
-  final vResult = await variation.last;
-
-  print(vResult);
-  exit(0);
-}
+final result = await variation.finished
 ```
 
 ### Upscale
 
-This example will trigger `/imagine` command on the Midjourney Bot, wait and trigger first upscale.
+Upscale an image for enhanced detail and clarity.
 
 ```shell
 dart run --define=SERVER_ID="" --define=CHANNEL_ID="" --define=TOKEN="" example/upscale.dart
 ```
 
 ```dart
-import 'dart:async';
-import 'dart:io';
+final client = midjourney_client.Midjourney();
 
-import 'package:midjourney_client/midjourney_client.dart' as midjourney_client;
+await client.initialize(
+  channelId: Env.channelId,
+  serverId: Env.serverId,
+  token: Env.token,
+);
 
-import 'env.dart';
+final imagine = client.imagine('Cat with asword');
 
-Future<void> main(List<Object> arguments) async {
-  final client = midjourney_client.Midjourney();
+final imagineResult = await imagine.finished;
 
-  await client.initialize(
-    channelId: Env.channelId,
-    serverId: Env.serverId,
-    token: Env.token,
-  );
+final upscaled = client.upscale(imagineResult, 1);
 
-  final imagine = client.imagine('Cat with a sword')..listen(print);
-
-  final result = await imagine.last;
-
-  final upscaled = client.upscale(result, 1)..listen(print);
-
-  final uResult = await upscaled.last;
-
-  print('Result: $uResult');
-  exit(0);
-}
+final result = await upscaled.finished;
 ```
+
+> **Note:** All examples code are located in the `example` folder.
