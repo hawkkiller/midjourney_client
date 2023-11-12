@@ -19,7 +19,8 @@ Future<void> main(List<Object> arguments) async {
     cdnUrl: 'https://proxy.lazebny.io/discord-cdn/',
   );
 
-  final imagine = client.imagine('Cat in a hat')..listen(print);
+  final imagine = client.imagine('Cat in a hat').asBroadcastStream()
+    ..listen(print);
 
   final result = await imagine.finished;
 

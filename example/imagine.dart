@@ -16,7 +16,8 @@ Future<void> main(List<Object> arguments) async {
     token: Env.token,
   );
 
-  final imagine = client.imagine('Cat in a hat')..listen(print);
+  final imagine = client.imagine('Cat in a hat').asBroadcastStream()
+    ..listen(print);
 
   final result = await imagine.finished;
 

@@ -2,6 +2,16 @@
 
 Format - `## {version} (YYYY-MM-DD)`
 
+## 0.4.1-pre.4 (2023-11-11)
+
+- Refactored and simplified code & naming
+- Replaced records with classes
+- Fixed crashes
+
+## 0.4.1-pre.3 (2023-11-10)
+
+- Fixed incorrect nonce and association failure
+
 ## 0.4.0 (2023-11-06)
 
 - Versions are not marked as alpha anymore

@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'core/discord_test.dart' as discord_test;
+import 'discord/discord_test.dart' as discord_test;
 import 'utils/utils_test.dart' as utils_test;
 
 void main() {

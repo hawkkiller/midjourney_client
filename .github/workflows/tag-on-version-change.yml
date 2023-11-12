@@ -1,0 +1,39 @@
+name: Tagging Workflow
+
+on:
+  push:
+    branches:
+      - main  # or any other branch you want to trigger this workflow
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ensures all tags are fetched
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Get version from pubspec
+        id: pubspec
+        run: |
+          echo "VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')" >> $GITHUB_ENV
+
+      - name: Get latest tag
+        id: latest-tag
+        run: |
+          echo "LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)"
+          echo "LATEST_TAG=${LATEST_TAG//v/}" >> $GITHUB_ENV
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+
+      - name: Compare and Tag
+        if: env.VERSION > env.LATEST_TAG
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag v$VERSION
+          git push origin v$VERSION

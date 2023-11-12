@@ -26,6 +26,23 @@ final class NotInitializedException implements MidjourneyException {
   String toString() => 'MidjourneyNotInitializedException: $message';
 }
 
+final class InitializationException implements MidjourneyException {
+  const InitializationException({
+    required this.message,
+    this.code,
+  });
+
+  /// The error code.
+  final int? code;
+
+  /// The error message.
+  @override
+  final String message;
+
+  @override
+  String toString() => 'MidjourneyInitializationException: $message';
+}
+
 final class InteractionException implements MidjourneyException {
   const InteractionException({
     required this.code,

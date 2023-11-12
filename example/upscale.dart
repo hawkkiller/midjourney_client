@@ -16,11 +16,13 @@ Future<void> main(List<Object> arguments) async {
     token: Env.token,
   );
 
-  final imagine = client.imagine('Cat with a sword')..listen(print);
+  final imagine = client.imagine('Cat with a sword').asBroadcastStream()
+    ..listen(print);
 
   final imagineResult = await imagine.finished;
 
-  final upscaled = client.upscale(imagineResult, 1)..listen(print);
+  final upscaled = client.upscale(imagineResult, 1).asBroadcastStream()
+    ..listen(print);
 
   final upscaledResult = await upscaled.finished;
 
