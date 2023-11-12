@@ -1,0 +1,40 @@
+name: Tagging Workflow
+
+on:
+  push:
+    branches:
+      - main  # or any other branch you want to trigger this workflow
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ensures all tags are fetched
+
+      - name: Get version from pubspec
+        id: pubspec
+        run: |
+          echo "VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')" >> $GITHUB_ENV
+
+      - name: Get latest tag
+        id: latest-tag
+        run: |
+          echo "LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)"
+          echo "LATEST_TAG=${LATEST_TAG//v/}" >> $GITHUB_ENV
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+
+      - name: Create tag
+        uses: actions/github-script@v5
+        if: ${{ env.VERSION != env.LATEST_TAG }}
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ env.VERSION }}',
+              sha: context.sha
+            })
