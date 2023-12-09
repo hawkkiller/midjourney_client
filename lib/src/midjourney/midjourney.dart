@@ -105,8 +105,8 @@ final class Midjourney {
   /// Imagine a new picture with the given [prompt].
   ///
   /// Returns streamed messages of progress.
-  StreamedImage imagine(String prompt) =>
-      StreamedMessage.from(_api.imagine(prompt));
+  StreamedImage imagine(String prompt, {int? seed}) =>
+      StreamedMessage.from(_api.imagine(prompt, seed: seed));
 
   /// Create a new variation based on the picture
   ///

@@ -7,7 +7,9 @@ sealed class MidjourneyMessageImage extends MidjourneyMessage {
     required this.messageId,
     required this.content,
     required this.id,
+    this.jobId,
     this.uri,
+    this.seed,
   });
 
   /// The id of the message
@@ -28,6 +30,14 @@ sealed class MidjourneyMessageImage extends MidjourneyMessage {
   /// Generated when first message created.
   final String id;
 
+  /// The Midjourney job id
+  final String? jobId;
+
+  /// The seed of a message
+  final int? seed;
+
+  String get type;
+
   int get progress => switch (this) {
         final MidjourneyMessageImageProgress v => v.progress,
         MidjourneyMessageImageFinish() => 100,
@@ -37,53 +47,47 @@ sealed class MidjourneyMessageImage extends MidjourneyMessage {
         MidjourneyMessageImageProgress() => false,
         MidjourneyMessageImageFinish() => true,
       };
+
+  @override
+  String toString() => '$type('
+      'messageId: $messageId, '
+      'content: $content, '
+      'id: $id, '
+      'jobId: $jobId, '
+      'uri: $uri, '
+      'seed: $seed, '
+      'progress: $progress, '
+      ')';
 }
 
-class MidjourneyMessageImageProgress extends MidjourneyMessageImage {
+final class MidjourneyMessageImageProgress extends MidjourneyMessageImage {
   const MidjourneyMessageImageProgress({
     required this.progress,
     required super.messageId,
     required super.content,
     required super.id,
+    super.jobId,
     super.uri,
+    super.seed,
   });
 
   @override
-  final int progress;
+  String get type => 'InProgress';
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..write(
-            r'MidjourneyMessage$Progress('
-            'progress: $progress, '
-            'messageId: $messageId, '
-            'content: $content, '
-            'uri: $uri, '
-            'id: $id'
-            ')',
-          ),
-      ).toString();
+  final int progress;
 }
 
-class MidjourneyMessageImageFinish extends MidjourneyMessageImage {
+final class MidjourneyMessageImageFinish extends MidjourneyMessageImage {
   const MidjourneyMessageImageFinish({
     required super.messageId,
     required super.content,
     required super.uri,
     required super.id,
+    required String super.jobId,
+    super.seed,
   });
 
   @override
-  String toString() => (
-        StringBuffer()
-          ..write(
-            r'MidjourneyMessage$Finish('
-            'id: $messageId, '
-            'content: $content, '
-            'uri: $uri'
-            'id: $id, '
-            ')',
-          ),
-      ).toString();
+  String get type => 'Finished';
 }

@@ -206,8 +206,21 @@ final class DiscordConnectionImpl implements DiscordConnection {
     required String nonce,
   }) async {
     notify(null, MidjourneyException(error));
+    _removeInProgressMessage(nonce);
+  }
+
+  void _removeInProgressMessage(String nonce) {
     _inProgressCalbacks.remove(nonce);
     _inProgressMessages.removeWhere((key, value) => value.nonce == nonce);
+  }
+
+  /// Get job id from uri
+  /// https://cdn.discordapp.com/bla/bla/bla/some_title_ed0bd7bf-f628-4e9w-828a-cebee56e0d5f.png
+  /// where ed0bd7bf-f628-4e9d-828a-cebee56e0d5f is the job id
+  String _getJobId(String uri) {
+    final uriSegments = Uri.parse(uri).pathSegments;
+    final jobId = uriSegments.last.split('_').last.split('.').first;
+    return jobId;
   }
 
   /// Handle created image message
@@ -223,12 +236,16 @@ final class DiscordConnectionImpl implements DiscordConnection {
     String nonce,
   ) async {
     final msg = linkedMessage.discordMessage;
-    final progressMessage = linkedMessage.inProgressMessage;
 
     if (msg.nonce == null) {
       // Clean up
-      _inProgressCalbacks.remove(nonce);
-      _inProgressMessages.remove(progressMessage.id);
+      _removeInProgressMessage(nonce);
+
+      final uri = msg.attachments!.first.url.replaceHost(config.cdnUrl);
+
+      final jobId = _getJobId(uri);
+
+      final seed = getSeedFromContent(msg.content ?? '');
 
       // Trigger an image generation finished event
       await notify(
@@ -236,7 +253,9 @@ final class DiscordConnectionImpl implements DiscordConnection {
           id: nonce,
           messageId: msg.id!,
           content: msg.content!,
-          uri: msg.attachments!.first.url.replaceHost(config.cdnUrl),
+          jobId: jobId,
+          seed: seed,
+          uri: uri,
         ),
         null,
       );
@@ -269,8 +288,7 @@ final class DiscordConnectionImpl implements DiscordConnection {
 
       if (title == null || description == null) {
         // do nothing
-      } else if (title.contains('continue') &&
-          description.contains("verify you're human")) {
+      } else if (title.contains('continue') && description.contains("verify you're human")) {
         // TODO(hawkkiller): handle captcha
         return;
       } else if (title.contains('Invalid')) {
@@ -292,6 +310,8 @@ final class DiscordConnectionImpl implements DiscordConnection {
     );
     MLogger.instance.d('Added ${msg.id} to in progress messages');
 
+    final seed = getSeedFromContent(msg.content ?? '');
+
     // Trigger an image generation started event
     await notify(
       MidjourneyMessageImageProgress(
@@ -299,11 +319,26 @@ final class DiscordConnectionImpl implements DiscordConnection {
         id: msg.nonce!,
         messageId: msg.id!,
         content: reason ?? msg.content ?? '',
+        seed: seed,
       ),
       null,
     );
     MLogger.instance.d('Triggered image generation started event');
     return;
+  }
+
+  @visibleForTesting
+  int? getProgressFromContent(String content) {
+    final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(content);
+    final progress = progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : null;
+    return progress;
+  }
+
+  @visibleForTesting
+  int? getSeedFromContent(String content) {
+    final seedMatch = Constants.seedRegex.firstMatch(content);
+    final seed = seedMatch != null ? int.tryParse(seedMatch.group(1) ?? '') : null;
+    return seed;
   }
 
   /// Handle updated image message
@@ -314,18 +349,24 @@ final class DiscordConnectionImpl implements DiscordConnection {
     ImageProgressNotifyCallback callback,
     String nonce,
   ) async {
-    final progressMatch = RegExp(r'\((\d+)%\)').firstMatch(msg.content!);
-    final progress =
-        progressMatch != null ? int.tryParse(progressMatch.group(1) ?? '0') : 0;
+    final progress = getProgressFromContent(msg.content ?? '') ?? 0;
+
+    final seed = getSeedFromContent(msg.content ?? '');
+
+    final uri = msg.attachments!.first.url.replaceHost(config.cdnUrl);
+
+    final jobId = _getJobId(uri);
 
     // Trigger an image progress event
     await callback(
       MidjourneyMessageImageProgress(
         id: nonce,
-        progress: progress ?? 0,
+        progress: progress,
         messageId: msg.id!,
         content: msg.content!,
-        uri: msg.attachments!.first.url.replaceHost(config.cdnUrl),
+        uri: uri,
+        seed: seed,
+        jobId: jobId,
       ),
       null,
     );
@@ -483,8 +524,6 @@ final class DiscordConnectionImpl implements DiscordConnection {
     if (message == null) {
       MLogger.instance.v('In progress messages: $_inProgressMessages');
       MLogger.instance.v('In progress message callbacks: $_inProgressCalbacks');
-      MLogger.instance
-          .d('No In progress message found for ${msg.id}, returning');
 
       return null;
     }
