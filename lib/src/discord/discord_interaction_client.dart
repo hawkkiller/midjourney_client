@@ -64,10 +64,11 @@ class DiscordInteractionClientImpl implements DiscordInteractionClient {
     limit: 1,
     period: const Duration(seconds: 2),
   );
-  late final Map<String, String> _headers = {
-    'Content-Type': 'application/json',
-    'Authorization': _config.token,
-  };
+
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        'Authorization': _config.token,
+      };
 
   @visibleForTesting
   final Map<CommandName, ApplicationCommand> commandsCache;
